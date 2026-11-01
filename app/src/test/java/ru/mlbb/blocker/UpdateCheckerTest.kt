@@ -27,15 +27,15 @@ class UpdateCheckerTest {
             {
               "tag_name": "v0.11.0",
               "name": "MLBB Blocker v0.11.0",
-              "html_url": "https://github.com/mrkoronalol/mlbb-blocker/releases/tag/v0.11.0",
+              "html_url": "https://github.com/mrkoronalol/mlbb-network-doctor/releases/tag/v0.11.0",
               "body": "notes",
               "assets": [
                 {
-                  "name": "MLBB-Blocker-0.11.0-universal.apk",
+                  "name": "MLBB-Network-Doctor-0.11.0-universal.apk",
                   "browser_download_url": "https://example.com/universal.apk"
                 },
                 {
-                  "name": "MLBB-Blocker-0.11.0-arm64.apk",
+                  "name": "MLBB-Network-Doctor-0.11.0-arm64.apk",
                   "browser_download_url": "https://example.com/arm64.apk",
                   "digest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
                   "size": 123456
@@ -49,7 +49,7 @@ class UpdateCheckerTest {
         assertNotNull(info)
         assertEquals("0.11.0", info!!.version)
         assertEquals("https://example.com/arm64.apk", info.downloadUrl)
-        assertEquals("https://github.com/mrkoronalol/mlbb-blocker/releases/tag/v0.11.0", info.releaseUrl)
+        assertEquals("https://github.com/mrkoronalol/mlbb-network-doctor/releases/tag/v0.11.0", info.releaseUrl)
         assertEquals(
             "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
             info.sha256,

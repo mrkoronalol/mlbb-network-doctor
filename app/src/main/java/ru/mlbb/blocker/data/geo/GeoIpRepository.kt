@@ -145,7 +145,7 @@ object GeoIpRepository {
                     connectTimeout = 20_000
                     readTimeout = 120_000
                     instanceFollowRedirects = true
-                    setRequestProperty("User-Agent", "MLBB-Blocker/GeoIP")
+                    setRequestProperty("User-Agent", "MLBB-Network-Doctor/GeoIP")
                 }
                 val code = connection.responseCode
                 if (code != HttpURLConnection.HTTP_OK) {

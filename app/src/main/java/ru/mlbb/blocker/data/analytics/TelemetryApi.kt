@@ -64,7 +64,7 @@ class TelemetryApi(baseUrl: String) {
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json; charset=utf-8")
                 setRequestProperty("Accept", "application/json")
-                setRequestProperty("User-Agent", "MLBB-Blocker")
+                setRequestProperty("User-Agent", "MLBB-Network-Doctor")
             }
             try {
                 connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }

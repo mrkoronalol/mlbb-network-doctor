@@ -57,7 +57,7 @@ object RemoteConfigRepository {
                 readTimeout = TIMEOUT_MS
                 instanceFollowRedirects = true
                 setRequestProperty("Accept", "application/json")
-                setRequestProperty("User-Agent", "MLBB-Blocker/${BuildConfig.VERSION_NAME}")
+                setRequestProperty("User-Agent", "MLBB-Network-Doctor/${BuildConfig.VERSION_NAME}")
             }
             try {
                 if (connection.responseCode != HttpURLConnection.HTTP_OK) return@withContext false

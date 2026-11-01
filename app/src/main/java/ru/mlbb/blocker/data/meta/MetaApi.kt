@@ -146,7 +146,7 @@ class MetaApi(private val baseUrl: String) {
                 readTimeout = 12_000
                 instanceFollowRedirects = true
                 setRequestProperty("Accept", "application/json")
-                setRequestProperty("User-Agent", "MLBB-Blocker")
+                setRequestProperty("User-Agent", "MLBB-Network-Doctor")
             }
             try {
                 val code = connection.responseCode

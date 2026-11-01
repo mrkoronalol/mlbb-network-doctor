@@ -11,9 +11,9 @@ import java.net.URL
 object RulesRemoteClient {
 
     const val RULES_URL =
-        "https://github.com/mrkoronalol/mlbb-blocker/releases/latest/download/rules.json"
+        "https://github.com/mrkoronalol/mlbb-network-doctor/releases/latest/download/rules.json"
     const val SIGNATURE_URL =
-        "https://github.com/mrkoronalol/mlbb-blocker/releases/latest/download/rules.json.sig"
+        "https://github.com/mrkoronalol/mlbb-network-doctor/releases/latest/download/rules.json.sig"
 
     private const val MAX_RULES_BYTES = 256 * 1024
     private const val MAX_SIGNATURE_BYTES = 8 * 1024
@@ -32,7 +32,7 @@ object RulesRemoteClient {
             readTimeout = TIMEOUT_MS
             instanceFollowRedirects = true
             setRequestProperty("Accept", "application/octet-stream")
-            setRequestProperty("User-Agent", "MLBB-Blocker")
+            setRequestProperty("User-Agent", "MLBB-Network-Doctor")
         }
         try {
             val code = connection.responseCode

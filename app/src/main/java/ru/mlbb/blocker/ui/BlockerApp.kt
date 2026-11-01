@@ -379,7 +379,7 @@ private fun UpdateRequiredDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    openUrl(context, "https://github.com/mrkoronalol/mlbb-blocker/releases/latest")
+                    openUrl(context, "https://github.com/mrkoronalol/mlbb-network-doctor/releases/latest")
                 },
             ) {
                 Text("Скачать обновление")

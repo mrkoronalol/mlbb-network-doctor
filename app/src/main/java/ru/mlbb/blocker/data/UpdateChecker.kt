@@ -20,7 +20,7 @@ data class UpdateInfo(
 object UpdateChecker {
 
     private const val API_URL =
-        "https://api.github.com/repos/mrkoronalol/mlbb-blocker/releases/latest"
+        "https://api.github.com/repos/mrkoronalol/mlbb-network-doctor/releases/latest"
 
     suspend fun checkLatest(currentVersion: String): UpdateInfo? = withContext(Dispatchers.IO) {
         try {
@@ -29,7 +29,7 @@ object UpdateChecker {
                 readTimeout = 10_000
                 instanceFollowRedirects = true
                 setRequestProperty("Accept", "application/vnd.github+json")
-                setRequestProperty("User-Agent", "MLBB-Blocker")
+                setRequestProperty("User-Agent", "MLBB-Network-Doctor")
             }
             if (connection.responseCode != HttpURLConnection.HTTP_OK) {
                 connection.disconnect()

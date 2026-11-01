@@ -48,7 +48,7 @@ object UpdateInstaller {
             connectTimeout = 15_000
             readTimeout = 120_000
             instanceFollowRedirects = true
-            setRequestProperty("User-Agent", "MLBB-Blocker")
+            setRequestProperty("User-Agent", "MLBB-Network-Doctor")
         }
         try {
             if (connection.responseCode != HttpURLConnection.HTTP_OK) {

@@ -99,7 +99,7 @@ class MainActivity : ComponentActivity() {
                     onDownloadGeoIp = viewModel::downloadGeoIp,
                     onExportBackup = {
                         exportBackupLauncher.launch(
-                            "mlbb-blocker-backup-${System.currentTimeMillis()}.json",
+                            "mlbb-network-doctor-backup-${System.currentTimeMillis()}.json",
                         )
                     },
                     onImportBackup = {
