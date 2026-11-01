@@ -75,7 +75,7 @@ object UpdateChecker {
         return UpdateInfo(
             version = version,
             tag = tag,
-            title = json.optString("name").ifBlank { "MLBB Blocker $tag" },
+            title = json.optString("name").ifBlank { "MLBB Network Doctor $tag" },
             releaseUrl = releaseUrl,
             downloadUrl = downloadUrl,
             notes = json.optString("body"),

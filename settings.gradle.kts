@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MLBB Blocker"
+rootProject.name = "MLBB Network Doctor"
 include(":app")

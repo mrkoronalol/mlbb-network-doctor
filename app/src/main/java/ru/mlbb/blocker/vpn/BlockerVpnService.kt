@@ -348,7 +348,7 @@ class BlockerVpnService : VpnService() {
         closeTunInterface()
 
         val builder = Builder()
-            .setSession("MLBB Blocker")
+            .setSession("MLBB Network Doctor")
             .setMtu(options.mtu)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

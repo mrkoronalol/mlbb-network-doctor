@@ -21,7 +21,7 @@
     <string name="settings_tab">Настройки</string>
 
     <string name="notification_channel">Блокировка MLBB</string>
-    <string name="notification_title">MLBB Blocker активен</string>
+    <string name="notification_title">MLBB Network Doctor активен</string>
     <string name="notification_text">Блокируется %1$d правил</string>
     <string name="notification_stop">Выключить</string>
     <string name="blocked_notification_title">MLBB пытается подключиться к заблокированному серверу</string>
@@ -85,7 +85,7 @@
 
     <string name="update_channel_name">Обновления приложения</string>
     <string name="update_notification_title">Доступна версия %1$s</string>
-    <string name="update_notification_text">Новая версия MLBB Blocker уже на GitHub. Нажмите, чтобы скачать APK.</string>
+    <string name="update_notification_text">Новая версия MLBB Network Doctor уже на GitHub. Нажмите, чтобы скачать APK.</string>
     <string name="update_available_title">Доступна новая версия %1$s</string>
     <string name="update_available_text">Скачайте свежий APK с GitHub. Текущая версия: %1$s.</string>
     <string name="update_download">Скачать APK</string>

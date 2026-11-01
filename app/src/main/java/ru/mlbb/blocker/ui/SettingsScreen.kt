@@ -539,7 +539,7 @@ private fun openOverlaySettings(context: Context) {
 
 private fun copyDiagnostics(context: Context, ui: UiState) {
     val text = buildString {
-        appendLine("MLBB Blocker ${BuildConfig.VERSION_NAME}")
+        appendLine("MLBB Network Doctor ${BuildConfig.VERSION_NAME}")
         appendLine("user=${ui.currentUserId}")
         appendLine("vpnPermission=${ui.vpnPermissionGranted}")
         appendLine("status=${ui.status}")
@@ -555,5 +555,5 @@ private fun copyDiagnostics(context: Context, ui: UiState) {
         }
     }
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    clipboard.setPrimaryClip(ClipData.newPlainText("MLBB Blocker diagnostics", text))
+    clipboard.setPrimaryClip(ClipData.newPlainText("MLBB Network Doctor diagnostics", text))
 }

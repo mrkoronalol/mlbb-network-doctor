@@ -479,7 +479,7 @@ private fun ImportDialog(
 
 private fun copyToClipboard(context: Context, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    clipboard.setPrimaryClip(ClipData.newPlainText("MLBB Blocker", text))
+    clipboard.setPrimaryClip(ClipData.newPlainText("MLBB Network Doctor", text))
 }
 
 private fun readClipboard(context: Context): String? {

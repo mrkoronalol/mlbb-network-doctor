@@ -228,7 +228,7 @@ fun AboutScreen() {
         }
 
         Text(
-            "MLBB Blocker ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) · для личного использования",
+            "MLBB Network Doctor ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) · для личного использования",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
@@ -274,7 +274,7 @@ private fun HeroCard() {
                     Spacer(Modifier.size(12.dp))
                     Column {
                         Text(
-                            "MLBB Blocker",
+                            "MLBB Network Doctor",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                         )

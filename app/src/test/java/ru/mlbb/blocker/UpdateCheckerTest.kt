@@ -26,7 +26,7 @@ class UpdateCheckerTest {
             """
             {
               "tag_name": "v0.11.0",
-              "name": "MLBB Blocker v0.11.0",
+              "name": "MLBB Network Doctor v0.11.0",
               "html_url": "https://github.com/mrkoronalol/mlbb-network-doctor/releases/tag/v0.11.0",
               "body": "notes",
               "assets": [
