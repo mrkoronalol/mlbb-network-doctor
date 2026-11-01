@@ -443,6 +443,11 @@ private fun HomeScreen(
         else -> selectedProfile.title
     }
     val currentPing = ui.currentMatch?.pingMs?.let { "$it мс" } ?: "—"
+    val regionShort = if (selectedProfile?.id == RegionProfiles.ID_CUSTOM) {
+        stringResource(R.string.region_custom_short)
+    } else {
+        regionLabel
+    }
     val routeStatus = when {
         !ui.isRunning -> stringResource(R.string.route_off)
         ui.discovery -> stringResource(R.string.route_direct)
@@ -581,7 +586,7 @@ private fun HomeScreen(
             )
             StatCard(
                 stringResource(R.string.dashboard_region),
-                regionLabel,
+                regionShort,
                 Modifier.weight(1f),
             )
         }

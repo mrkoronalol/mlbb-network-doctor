@@ -140,7 +140,9 @@
     <string name="route_off">Выкл.</string>
     <string name="profile_label">Профиль</string>
     <string name="region_auto">Авто-выбор</string>
+    <string name="auto_needs_ping">Сначала соберите пинг в «Мониторе»: тогда авто-выбор сможет сравнить регионы.</string>
     <string name="region_custom">Пользовательский</string>
+    <string name="region_custom_short">Свой</string>
     <string name="region_select">Регион</string>
     <string name="diagnostics_title">Диагностика пинга</string>
     <string name="diagnostics_run">Замерить пинг до всех серверов</string>

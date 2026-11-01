@@ -534,9 +534,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun selectProfile(profileId: String) {
         val resolvedId = if (profileId == "auto") {
-            AutoProfileAdvisor.pick(_ui.value.connections)
-                ?: _ui.value.selectedProfile
-                ?: return
+            val picked = AutoProfileAdvisor.pick(_ui.value.connections)
+            if (picked == null) {
+                showMessage(
+                    getApplication<Application>().getString(R.string.auto_needs_ping),
+                )
+                return
+            }
+            picked
         } else {
             profileId
         }
