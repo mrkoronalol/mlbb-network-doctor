@@ -98,8 +98,10 @@ object BuiltInRules {
         id = RegionProfiles.ID_FAR_EAST,
         title = "ДВ",
         badge = "ДВ",
-        description = "Блокировать всё, кроме ДВ: Москву, Новосибирск, Екатеринбург, Ростов, Абакан, Франкфурт, Тбилиси, Вьентьян. Хабаровск и Владивосток остаются.",
+        description = "Только ДВ: Хабаровск и Владивосток. Остальные матч-серверы блокируются; логин и служебный трафик работают.",
         rules = MOSCOW_SERVERS + NOVOSIBIRSK_SERVERS + OTHER_REGIONS,
+        allowedCidrs = FAR_EAST_SERVERS.map { it.first },
+        blockOtherMatchServers = true,
     )
 
     val NOVOSIBIRSK = RegionProfile(

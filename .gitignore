@@ -17,3 +17,5 @@ captures/
 .externalNativeBuild/
 .cxx/
 keystore.properties
+
+/audit/

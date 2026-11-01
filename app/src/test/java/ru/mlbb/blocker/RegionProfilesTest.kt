@@ -36,7 +36,8 @@ class RegionProfilesTest {
     }
 
     @Test
-    fun farEastProfileBlocksOtherRegionsButNotKhabarovsk() {
+    fun farEastProfileAllowsOnlyFarEast() {
+        assertEquals(listOf("92.223.80.0/24"), RegionProfiles.FAR_EAST.allowedCidrs)
         val values = RegionProfiles.FAR_EAST.rules.map { it.first }.toSet()
         assertTrue("154.85.91.0/24" in values)
         assertTrue("146.185.199.0/24" in values)
@@ -45,7 +46,7 @@ class RegionProfilesTest {
         assertTrue("148.153.35.0/24" in values)
         assertTrue("148.153.50.0/24" in values)
         assertFalse(values.any { it.startsWith("92.223.80.") })
-        assertFalse(RegionProfiles.FAR_EAST.blockOtherMatchServers)
+        assertTrue(RegionProfiles.FAR_EAST.blockOtherMatchServers)
     }
 
     @Test

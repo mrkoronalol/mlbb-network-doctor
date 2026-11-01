@@ -1,5 +1,13 @@
 # Changelog
 
+## Experimental audit 2026-11-01 (no version bump)
+
+- Intercepted MLBB login and matchmaking via ADB (UID 10438, `/proc/net/*` + logcat).
+- Login/lobby pool: `154.85.91.151/156/157/152:10003` (Moscow `/24`); service: `161.202.*:30071/30021/30220`, `158.177.179.101:30101`; CDNs on 443.
+- Tried an experimental "ТЕСТ ДВ" profile (DV + `154.85.91.151/156`): the game reached matchmaking but assigned `154.85.91.152:10003`, which the profile blocked. Strict DV (only `.151`) failed login because the game rotates login IPs inside `154.85.91.0/24`.
+- Conclusion: local IP blocking cannot force DV. Login/lobby and match servers share the Moscow `154.85.91.0/24:10003`; blocking breaks login, allowing yields Moscow/Ekb/Rostov. The experimental profile was removed.
+- Alternative: a remote relay/VPN with a DV exit at login (Smetargus-like), or an account registered in the DV region. Local filtering alone is not enough.
+
 ## 0.19.0
 
 - Anonymous telemetry: a random device id, events queued in Room and sent in batches every 15 minutes.

@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import ru.mlbb.blocker.data.BlockerPolicy
 import ru.mlbb.blocker.data.GamePorts
+import ru.mlbb.blocker.data.RegionProfiles
 import ru.mlbb.blocker.data.RouteAction
 import ru.mlbb.blocker.data.RuleEngine
 import ru.mlbb.blocker.data.StartupEndpoints
@@ -73,5 +74,40 @@ class RuleEngineTest {
     @Test
     fun privateAddressesAreDirect() {
         assertEquals(RouteAction.DIRECT, RuleEngine.decide("192.168.1.10", 10003, policy).action)
+    }
+
+    @Test
+    fun farEastProfileAllowsOnlyFarEastMatchServers() {
+        val profile = RegionProfiles.FAR_EAST
+        val dvPolicy = BlockerPolicy(
+            allowCidrs = profile.allowedCidrs,
+            startupCidrs = StartupEndpoints.CIDRS,
+            profileBlockCidrs = profile.rules.map { it.first },
+            blockOtherMatchPorts = profile.blockOtherMatchServers,
+        )
+        assertEquals(
+            RouteAction.DIRECT,
+            RuleEngine.decide("92.223.80.65", 5558, dvPolicy).action,
+        )
+        assertEquals(
+            RouteAction.SINK,
+            RuleEngine.decide("154.85.91.157", 10003, dvPolicy).action,
+        )
+        assertEquals(
+            RouteAction.SINK,
+            RuleEngine.decide("92.223.91.5", 5558, dvPolicy).action,
+        )
+        assertEquals(
+            RouteAction.SINK,
+            RuleEngine.decide("203.0.113.10", 5558, dvPolicy).action,
+        )
+        assertEquals(
+            RouteAction.DIRECT,
+            RuleEngine.decide("154.85.91.151", 10003, dvPolicy).action,
+        )
+        assertEquals(
+            RouteAction.DIRECT,
+            RuleEngine.decide("92.223.80.65", 30021, dvPolicy).action,
+        )
     }
 }
