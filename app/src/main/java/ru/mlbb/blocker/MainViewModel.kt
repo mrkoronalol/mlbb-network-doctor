@@ -35,6 +35,10 @@ import ru.mlbb.blocker.data.HealthIssue
 import ru.mlbb.blocker.data.BlockerHealth
 import ru.mlbb.blocker.data.InstallResult
 import ru.mlbb.blocker.data.analytics.Analytics
+import ru.mlbb.blocker.data.analytics.PingTelemetry
+import ru.mlbb.blocker.data.AutoProfileAdvisor
+import ru.mlbb.blocker.data.PingCollector
+import ru.mlbb.blocker.data.PingReport
 import ru.mlbb.blocker.data.MlbbPackageInfo
 import ru.mlbb.blocker.data.db.BlockedAttemptEntity
 import ru.mlbb.blocker.data.db.MatchSessionEntity
@@ -102,6 +106,8 @@ data class UiState(
     val unknownPortAlerts: Boolean = true,
     val stableOnlyAlerts: Boolean = false,
     val analyticsEnabled: Boolean = true,
+    val pingRunning: Boolean = false,
+    val pingReport: PingReport? = null,
     val maintenance: Boolean = false,
     val remoteNotice: String = "",
     val featureMetaEnabled: Boolean = true,
@@ -443,6 +449,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _ui.update { it.copy(stableOnlyAlerts = enabled) }
     }
 
+    fun runPingDiagnostics() {
+        if (_ui.value.pingRunning) return
+        _ui.update { it.copy(pingRunning = true) }
+        viewModelScope.launch {
+            val profile = store.selectedProfile?.let(RegionProfiles::byId)
+            val report = withContext(Dispatchers.IO) {
+                PingCollector.collect(PingCollector.policyFor(profile))
+            }
+            _ui.update { it.copy(pingRunning = false, pingReport = report) }
+            val sent = withContext(Dispatchers.IO) {
+                PingTelemetry.send(
+                    getApplication(),
+                    report.fastest + report.blocked,
+                )
+            }
+            if (sent) {
+                showMessage(
+                    getApplication<Application>().getString(R.string.diagnostics_sent),
+                )
+            }
+        }
+    }
+
     fun setAnalyticsEnabled(enabled: Boolean) {
         Analytics.setEnabled(getApplication(), enabled)
         _ui.update { it.copy(analyticsEnabled = enabled) }
@@ -504,10 +533,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selectProfile(profileId: String) {
-        val profile = RegionProfiles.byId(profileId) ?: return
-        if (store.selectedProfile == profileId) return
-        store.selectProfile(profileId)
-        Analytics.track("profile_selected", mapOf("profile" to profileId))
+        val resolvedId = if (profileId == "auto") {
+            AutoProfileAdvisor.pick(_ui.value.connections)
+                ?: _ui.value.selectedProfile
+                ?: return
+        } else {
+            profileId
+        }
+        val profile = RegionProfiles.byId(resolvedId) ?: return
+        if (store.selectedProfile == resolvedId) return
+        store.selectProfile(resolvedId)
+        Analytics.track("profile_selected", mapOf("profile" to resolvedId))
         refreshRules()
         reloadIfRunning()
         showMessage(

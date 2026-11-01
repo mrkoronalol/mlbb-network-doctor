@@ -39,6 +39,15 @@ class MetaApi(private val baseUrl: String) {
         }
     }
 
+    fun fetchLowPing(): MetaResult<MetaSnapshot> {
+        if (base.isBlank()) return MetaResult.Failure("Адрес API не задан")
+        val url = "$base/api/v1/meta/low-ping"
+        return when (val response = get(url)) {
+            is HttpText.Success -> parseMeta(response.body, "world")
+            is HttpText.Failure -> MetaResult.Failure(response.message)
+        }
+    }
+
     internal fun parseMeta(body: String, region: String): MetaResult<MetaSnapshot> {
         if (body.trimStart().startsWith("<")) {
             return MetaResult.Failure(
@@ -98,6 +107,7 @@ class MetaApi(private val baseUrl: String) {
             matches = obj.optIntOrNull("matches"),
             tier = MetaTier.from(obj.optString("tier").ifBlank { obj.optString("metaTier") }),
             sortOrder = obj.optInt("sortOrder", index),
+            pingSensitivity = obj.optString("pingSensitivity").takeIf { it.isNotBlank() },
         )
     }
 

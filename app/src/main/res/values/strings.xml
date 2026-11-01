@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MLBB Blocker</string>
-    <string name="app_description">Локальная блокировка выбранных серверов Mobile Legends</string>
+    <string name="app_name">MLBB Network Doctor</string>
+    <string name="app_description">Диагностика сети Mobile Legends: пинг, маршрут и локальная фильтрация серверов</string>
 
     <string name="status_stopped">Выключен</string>
     <string name="status_starting">Запуск…</string>
     <string name="status_running">Активен</string>
     <string name="status_error">Ошибка</string>
 
-    <string name="main_title">MLBB Blocker</string>
-    <string name="main_subtitle">Блокировка серверов только для Mobile Legends</string>
+    <string name="main_title">MLBB Network Doctor</string>
+    <string name="main_subtitle">Диагностика сети и адаптация к пингу MLBB</string>
     <string name="connect">Включить блокировку</string>
     <string name="disconnect">Выключить</string>
     <string name="rules_count">Правил: %1$d</string>
@@ -132,4 +132,25 @@
     <string name="settings_privacy_subtitle">Анонимная статистика</string>
     <string name="settings_analytics_title">Отправлять анонимную статистику</string>
     <string name="settings_analytics_desc">Мы собираем только анонимные события: какие профили вы выбираете, сколько раз открываете мету и включаете VPN. Это помогает делать приложение лучше. Личные данные и содержимое трафика мы не собираем.</string>
+    <string name="dashboard_ping">Пинг</string>
+    <string name="dashboard_route">Маршрут</string>
+    <string name="dashboard_region">Регион</string>
+    <string name="route_direct">Прямой</string>
+    <string name="route_filtered">Активен</string>
+    <string name="route_off">Выкл.</string>
+    <string name="profile_label">Профиль</string>
+    <string name="region_auto">Авто-выбор</string>
+    <string name="region_custom">Пользовательский</string>
+    <string name="region_select">Регион</string>
+    <string name="diagnostics_title">Диагностика пинга</string>
+    <string name="diagnostics_run">Замерить пинг до всех серверов</string>
+    <string name="diagnostics_running">Замеряю…</string>
+    <string name="diagnostics_fastest">Самые быстрые</string>
+    <string name="diagnostics_blocked">Заблокированы профилем</string>
+    <string name="diagnostics_empty">Нажмите «Замерить», чтобы увидеть лучшие серверы</string>
+    <string name="diagnostics_none">Серверы не ответили. Проверьте соединение.</string>
+    <string name="diagnostics_sent">Пинг отправлен на сайт</string>
+    <string name="low_ping_filter">Только для высокого пинга</string>
+    <string name="low_ping_hint">Герои, которые прощают задержку: танки, AOE-маги, саппорты</string>
+    <string name="low_ping_badge">Lag-friendly</string>
 </resources>

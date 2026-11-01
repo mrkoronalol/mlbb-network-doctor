@@ -46,6 +46,7 @@ data class MetaHero(
     val matches: Int?,
     val tier: MetaTier,
     val sortOrder: Int,
+    val pingSensitivity: String? = null,
 ) {
     val displayName: String get() = nameRu.ifBlank { nameEn }
 

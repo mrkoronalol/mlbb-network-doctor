@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.20.0 — MLBB Network Doctor
+
+- Rebrand: the app is now **MLBB Network Doctor** (launcher, header, description). The VPN filter is still there; it moved into the dashboard.
+- New dashboard: current ping, route status (direct / filtered / off) and the selected region as three live tiles.
+- Profiles are a compact dropdown in the dashboard (Auto, built-in regions, Custom) instead of big cards.
+- **Auto**: picks the region with the lowest measured ping among connections inside each profile's allowed networks.
+- **Ping diagnostics** (Monitor → Диагностика пинга): probes every known match server, shows the 5 fastest and the 5 blocked by the current profile, and sends anonymized results to `POST /api/v1/telemetry/ping`.
+- Meta tab: **Только для высокого пинга** filter backed by `GET /api/v1/meta/low-ping`.
+- `MetaHero` now carries `pingSensitivity` (LOW / MEDIUM / HIGH) from the site.
+
 ## Experimental audit 2026-11-01 (no version bump)
 
 - Intercepted MLBB login and matchmaking via ADB (UID 10438, `/proc/net/*` + logcat).

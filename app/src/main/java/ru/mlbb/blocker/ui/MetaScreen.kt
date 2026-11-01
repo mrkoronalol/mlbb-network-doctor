@@ -48,12 +48,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import ru.mlbb.blocker.R
 import ru.mlbb.blocker.MetaUiState
 import ru.mlbb.blocker.MetaViewModel
 import ru.mlbb.blocker.data.meta.MetaHero
@@ -82,6 +84,32 @@ fun MetaScreen(viewModel: MetaViewModel = viewModel()) {
                 selected = state.region,
                 onSelect = viewModel::selectRegion,
             )
+        }
+
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                FilterChip(
+                    selected = state.lowPingOnly,
+                    onClick = { viewModel.setLowPingOnly(!state.lowPingOnly) },
+                    label = {
+                        Text(
+                            stringResource(R.string.low_ping_filter),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = AppColors.Success.copy(alpha = 0.18f),
+                        selectedLabelColor = AppColors.Success,
+                    ),
+                )
+                if (state.lowPingOnly) {
+                    Text(
+                        stringResource(R.string.low_ping_hint),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
 
         val snapshot = state.snapshot

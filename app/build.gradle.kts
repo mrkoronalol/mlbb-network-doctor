@@ -20,8 +20,8 @@ android {
         applicationId = "ru.mlbb.blocker"
         minSdk = 24
         targetSdk = 35
-        versionCode = 27
-        versionName = "0.19.0"
+        versionCode = 28
+        versionName = "0.20.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -148,8 +148,8 @@ dependencies {
 }
 
 
-// Подпись rules.json тем же ключом, что и APK. Результат публикуется в GitHub-релизе
-// как rules.json и rules.json.sig; приложение проверяет подпись сертификатом APK.
+// РџРѕРґРїРёСЃСЊ rules.json С‚РµРј Р¶Рµ РєР»СЋС‡РѕРј, С‡С‚Рѕ Рё APK. Р РµР·СѓР»СЊС‚Р°С‚ РїСѓР±Р»РёРєСѓРµС‚СЃСЏ РІ GitHub-СЂРµР»РёР·Рµ
+// РєР°Рє rules.json Рё rules.json.sig; РїСЂРёР»РѕР¶РµРЅРёРµ РїСЂРѕРІРµСЂСЏРµС‚ РїРѕРґРїРёСЃСЊ СЃРµСЂС‚РёС„РёРєР°С‚РѕРј APK.
 val signRules by tasks.registering {
     group = "distribution"
     description = "Signs rules.json with the release key for publishing as release assets."

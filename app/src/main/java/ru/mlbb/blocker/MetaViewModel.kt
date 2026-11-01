@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.mlbb.blocker.data.meta.MetaCounters
 import ru.mlbb.blocker.data.meta.MetaHero
+import ru.mlbb.blocker.data.meta.MetaApi
 import ru.mlbb.blocker.data.meta.MetaRepository
 import ru.mlbb.blocker.data.meta.MetaResult
 import ru.mlbb.blocker.data.meta.MetaSnapshot
@@ -31,6 +32,7 @@ data class MetaUiState(
     val countersLoading: Boolean = false,
     val countersError: String? = null,
     val sheetMessage: String? = null,
+    val lowPingOnly: Boolean = false,
 )
 
 class MetaViewModel(application: Application) : AndroidViewModel(application) {
@@ -92,8 +94,37 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun selectRegion(region: String) {
-        if (_ui.value.region == region) return
+    fun setLowPingOnly(enabled: Boolean) {
+        if (_ui.value.lowPingOnly == enabled) return
+        _ui.update { it.copy(lowPingOnly = enabled, loading = true, error = null) }
+        if (!enabled) {
+            refresh()
+            return
+        }
+        viewModelScope.launch {
+            val app = getApplication<Application>()
+            val result = withContext(Dispatchers.IO) {
+                MetaApi(MetaRepository.apiBase(app)).fetchLowPing()
+            }
+            _ui.update { state ->
+                when (result) {
+                    is MetaResult.Success -> state.copy(
+                        loading = false,
+                        snapshot = result.value,
+                        lowPingOnly = true,
+                        error = null,
+                    )
+
+                    is MetaResult.Failure -> state.copy(
+                        loading = false,
+                        error = result.message,
+                    )
+                }
+            }
+        }
+    }
+
+    fun selectRegion(region: String) {        if (_ui.value.region == region) return
         MetaRepository.setRegion(getApplication(), region)
         _ui.update { it.copy(region = region) }
         refresh()

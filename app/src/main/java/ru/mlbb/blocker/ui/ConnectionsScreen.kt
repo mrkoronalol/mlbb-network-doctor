@@ -46,14 +46,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import ru.mlbb.blocker.R
 import ru.mlbb.blocker.data.ConnectionStat
 import ru.mlbb.blocker.data.KnownServer
 import ru.mlbb.blocker.data.KnownServerKind
 import ru.mlbb.blocker.data.KnownServers
+import ru.mlbb.blocker.data.PingReport
+import ru.mlbb.blocker.data.PingTargetResult
 import ru.mlbb.blocker.data.RegionProfiles
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,6 +66,9 @@ fun ConnectionsScreen(
     connections: List<ConnectionStat>,
     selectedProfile: String?,
     pingingKeys: Set<String>,
+    pingReport: PingReport? = null,
+    pingRunning: Boolean = false,
+    onRunPingDiagnostics: () -> Unit = {},
     onPing: (ConnectionStat) -> Unit,
     onPingAll: () -> Unit,
     onBlock: (ConnectionStat, Boolean) -> Unit,
@@ -176,6 +183,12 @@ fun ConnectionsScreen(
                 }
             }
         }
+
+        PingDiagnosticsCard(
+            report = pingReport,
+            running = pingRunning,
+            onRun = onRunPingDiagnostics,
+        )
 
         OutlinedTextField(
             value = query,
@@ -588,4 +601,95 @@ private fun knownColor(known: KnownServer): androidx.compose.ui.graphics.Color {
 private fun copyToClipboard(context: Context, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText("MLBB IP", text))
+}
+
+@Composable
+private fun PingDiagnosticsCard(
+    report: PingReport?,
+    running: Boolean,
+    onRun: () -> Unit,
+) {
+    EsportsCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                stringResource(R.string.diagnostics_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            OutlinedButton(
+                onClick = onRun,
+                enabled = !running,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    stringResource(
+                        if (running) R.string.diagnostics_running
+                        else R.string.diagnostics_run,
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+            if (report == null) {
+                Text(
+                    stringResource(R.string.diagnostics_empty),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                if (report.fastest.isEmpty() && report.blocked.isEmpty()) {
+                    Text(
+                        stringResource(R.string.diagnostics_none),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (report.fastest.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.diagnostics_fastest),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AppColors.Success,
+                    )
+                    report.fastest.take(5).forEach { PingDiagnosticRow(it) }
+                }
+                if (report.blocked.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.diagnostics_blocked),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AppColors.Danger,
+                    )
+                    report.blocked.take(5).forEach { PingDiagnosticRow(it) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PingDiagnosticRow(result: PingTargetResult) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "${result.target.region} · ${result.target.ip}:${result.target.port}",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            result.pingMs?.let { "$it мс" } ?: "—",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = if (result.blocked) AppColors.Danger else AppColors.Success,
+        )
+    }
 }

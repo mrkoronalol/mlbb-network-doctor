@@ -19,6 +19,18 @@ object RegionProfiles {
     const val ID_FAR_EAST = "far_east"
     const val ID_MOSCOW = "moscow"
     const val ID_NOVOSIBIRSK = "novosibirsk"
+    const val ID_CUSTOM = "custom"
+
+    /** Пользовательский профиль: работают только ручные правила блокировки. */
+    val CUSTOM = RegionProfile(
+        id = ID_CUSTOM,
+        title = "Пользовательский",
+        badge = "СВОЙ",
+        description = "Только ваши правила из блок-листа. Профильные ограничения отключены.",
+        rules = emptyList(),
+        allowedCidrs = emptyList(),
+        blockOtherMatchServers = false,
+    )
 
     /** Пресеты для блоклиста остаются встроенными: это удобные заготовки, а не правила маршрутизации. */
     val MOSCOW_SERVERS: List<Pair<String, String>> get() = BuiltInRules.MOSCOW_SERVERS
@@ -29,7 +41,14 @@ object RegionProfiles {
             RuleConfigRepository.current.profiles
         }
 
-    fun byId(id: String): RegionProfile? = all.firstOrNull { it.id == id }
+    /** Профили для выпадающего списка: авто, встроенные/удалённые и пользовательский. */
+    val selectable: List<RegionProfile>
+        get() = all + CUSTOM
+
+    fun byId(id: String): RegionProfile? {
+        if (id == ID_CUSTOM) return CUSTOM
+        return all.firstOrNull { it.id == id }
+    }
 
     val MOSCOW: RegionProfile
         get() = byId(ID_MOSCOW) ?: BuiltInRules.MOSCOW
@@ -39,4 +58,28 @@ object RegionProfiles {
 
     val NOVOSIBIRSK: RegionProfile
         get() = byId(ID_NOVOSIBIRSK) ?: BuiltInRules.NOVOSIBIRSK
+}
+
+/**
+ * Выбирает профиль по фактическим замерам: сравнивает средний пинг подключений,
+ * попадающих в allow-сети профиля. Если данных нет — профиль не меняется.
+ */
+object AutoProfileAdvisor {
+
+    fun pick(connections: List<ConnectionStat>): String? {
+        val scored = listOf(
+            RegionProfiles.ID_MOSCOW,
+            RegionProfiles.ID_FAR_EAST,
+            RegionProfiles.ID_NOVOSIBIRSK,
+        ).mapNotNull { id ->
+            val profile = RegionProfiles.byId(id) ?: return@mapNotNull null
+            val pings = connections
+                .filter { connection ->
+                    profile.allowedCidrs.any { Cidr.contains(it, connection.ip) }
+                }
+                .mapNotNull { it.pingMs }
+            if (pings.isEmpty()) null else id to pings.average()
+        }
+        return scored.minByOrNull { it.second }?.first
+    }
 }

@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
@@ -36,6 +37,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -132,6 +135,7 @@ fun BlockerApp(
     onUnknownPortAlertsChange: (Boolean) -> Unit,
     onStableOnlyAlertsChange: (Boolean) -> Unit,
     onAnalyticsEnabledChange: (Boolean) -> Unit,
+    onRunPingDiagnostics: () -> Unit,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
@@ -245,6 +249,9 @@ fun BlockerApp(
                         connections = ui.connections,
                         selectedProfile = ui.selectedProfile,
                         pingingKeys = ui.pingingKeys,
+                        pingReport = ui.pingReport,
+                        pingRunning = ui.pingRunning,
+                        onRunPingDiagnostics = onRunPingDiagnostics,
                         onPing = onPing,
                         onPingAll = onPingAll,
                         onBlock = onAddConnection,
@@ -426,7 +433,21 @@ private fun HomeScreen(
 ) {
     var infoProfile by remember { mutableStateOf<RegionProfile?>(null) }
     var noticeDismissed by rememberSaveable { mutableStateOf(false) }
+    var profileMenu by remember { mutableStateOf(false) }
     val error = ui.status as? BlockerStatus.Error
+    val selectedProfile = ui.selectedProfile?.let(RegionProfiles::byId)
+    val regionLabel = when {
+        selectedProfile == null -> stringResource(R.string.region_auto)
+        selectedProfile.id == RegionProfiles.ID_CUSTOM ->
+            stringResource(R.string.region_custom)
+        else -> selectedProfile.title
+    }
+    val currentPing = ui.currentMatch?.pingMs?.let { "$it мс" } ?: "—"
+    val routeStatus = when {
+        !ui.isRunning -> stringResource(R.string.route_off)
+        ui.discovery -> stringResource(R.string.route_direct)
+        else -> stringResource(R.string.route_filtered)
+    }
 
     Column(
         modifier = Modifier
@@ -436,32 +457,55 @@ private fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
+            Text(
+                stringResource(R.string.profile_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.size(8.dp))
+            Box {
+                OutlinedButton(onClick = { profileMenu = true }) {
+                    Text(regionLabel, style = MaterialTheme.typography.labelLarge)
+                    Icon(
+                        Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+                DropdownMenu(
+                    expanded = profileMenu,
+                    onDismissRequest = { profileMenu = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.region_auto)) },
+                        onClick = {
+                            profileMenu = false
+                            onSelectProfile("auto")
+                        },
+                    )
+                    RegionProfiles.selectable.forEach { profile ->
+                        DropdownMenuItem(
+                            text = { Text(profile.title) },
+                            onClick = {
+                                profileMenu = false
+                                onSelectProfile(profile.id)
+                            },
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            IconButton(
+                onClick = {
+                    infoProfile = selectedProfile ?: RegionProfiles.all.firstOrNull()
+                },
+                modifier = Modifier.size(30.dp),
             ) {
                 Icon(
-                    Icons.Default.Lock,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-            Spacer(Modifier.size(12.dp))
-            Column {
-                Text(
-                    "MLBB Blocker",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(R.string.main_subtitle),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
+                    Icons.Default.Info,
+                    contentDescription = "Описание профилей",
+                    tint = AppColors.CyanLight,
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
@@ -522,6 +566,24 @@ private fun HomeScreen(
 
         if (ui.showOnboarding) {
             OnboardingCard(onDone = onFinishOnboarding)
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatCard(
+                stringResource(R.string.dashboard_ping),
+                currentPing,
+                Modifier.weight(1f),
+            )
+            StatCard(
+                stringResource(R.string.dashboard_route),
+                routeStatus,
+                Modifier.weight(1f),
+            )
+            StatCard(
+                stringResource(R.string.dashboard_region),
+                regionLabel,
+                Modifier.weight(1f),
+            )
         }
 
         EsportsCard {
@@ -594,47 +656,6 @@ private fun HomeScreen(
             }
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "Профиль",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            IconButton(
-                onClick = {
-                    infoProfile = ui.selectedProfile?.let(RegionProfiles::byId)
-                        ?: RegionProfiles.all.firstOrNull()
-                },
-                modifier = Modifier.size(30.dp),
-            ) {
-                Icon(
-                    Icons.Default.Info,
-                    contentDescription = "Описание профилей",
-                    tint = AppColors.CyanLight,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            if (ui.selectedProfile == null) {
-                Text(
-                    "не выбран",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = AppColors.Warning,
-                )
-            }
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            RegionProfiles.all.forEach { profile ->
-                CompactProfileCard(
-                    profile = profile,
-                    selected = ui.selectedProfile == profile.id,
-                    onClick = { onSelectProfile(profile.id) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatCard("Правила", ui.effectiveRuleCount.toString(), Modifier.weight(1f))
             StatCard("Собрано IP", ui.connections.size.toString(), Modifier.weight(1f))
@@ -650,36 +671,6 @@ private fun HomeScreen(
 
     infoProfile?.let { profile ->
         ProfileInfoSheet(profile = profile, onDismiss = { infoProfile = null })
-    }
-}
-
-@Composable
-private fun CompactProfileCard(
-    profile: RegionProfile,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val accent = profileAccent(profile)
-    EsportsCard(
-        modifier = modifier.height(58.dp).clickable(onClick = onClick),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) accent.copy(alpha = 0.16f) else AppColors.Surface,
-        ),
-        border = BorderStroke(
-            width = if (selected) 1.5.dp else 1.dp,
-            color = if (selected) accent else AppColors.Border,
-        ),
-    ) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                profile.badge,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (selected) accent else AppColors.Text,
-            )
-        }
     }
 }
 
@@ -922,17 +913,20 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 value,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 label,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
             )
         }
     }

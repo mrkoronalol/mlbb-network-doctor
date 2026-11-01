@@ -119,6 +119,7 @@ class MainActivity : ComponentActivity() {
                     onUnknownPortAlertsChange = viewModel::setUnknownPortAlerts,
                     onStableOnlyAlertsChange = viewModel::setStableOnlyAlerts,
                     onAnalyticsEnabledChange = viewModel::setAnalyticsEnabled,
+                    onRunPingDiagnostics = viewModel::runPingDiagnostics,
                 )
             }
         }
