@@ -101,6 +101,7 @@ data class UiState(
     val rulesStatus: RulesStatus = RulesStatus(),
     val unknownPortAlerts: Boolean = true,
     val stableOnlyAlerts: Boolean = false,
+    val analyticsEnabled: Boolean = true,
     val maintenance: Boolean = false,
     val remoteNotice: String = "",
     val featureMetaEnabled: Boolean = true,
@@ -141,6 +142,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 .getOrDefault(false),
             unknownPortAlerts = store.unknownPortAlerts,
             stableOnlyAlerts = store.stableOnlyAlerts,
+            analyticsEnabled = Analytics.isEnabled(application),
         ),
     )
     val ui: StateFlow<UiState> = _ui.asStateFlow()
@@ -439,6 +441,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setStableOnlyAlerts(enabled: Boolean) {
         store.stableOnlyAlerts = enabled
         _ui.update { it.copy(stableOnlyAlerts = enabled) }
+    }
+
+    fun setAnalyticsEnabled(enabled: Boolean) {
+        Analytics.setEnabled(getApplication(), enabled)
+        _ui.update { it.copy(analyticsEnabled = enabled) }
     }
 
     /** Кнопка «Исправить» в баннере состояния защиты. */

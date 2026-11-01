@@ -37,6 +37,12 @@ interface AnalyticsDao {
     @Insert
     suspend fun insertEvent(event: AnalyticsEventEntity): Long
 
+    @Query("DELETE FROM analytics_events")
+    suspend fun clearEvents()
+
+    @Query("DELETE FROM telemetry_ips")
+    suspend fun clearIps()
+
     @Query("SELECT * FROM analytics_events ORDER BY id ASC LIMIT :limit")
     suspend fun events(limit: Int): List<AnalyticsEventEntity>
 

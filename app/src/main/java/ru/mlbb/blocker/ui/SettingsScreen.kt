@@ -69,6 +69,7 @@ fun SettingsScreen(
     onRefreshRules: () -> Unit,
     onUnknownPortAlertsChange: (Boolean) -> Unit,
     onStableOnlyAlertsChange: (Boolean) -> Unit,
+    onAnalyticsEnabledChange: (Boolean) -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(setOf("blocking")) }
     var showApiDialog by remember { mutableStateOf(false) }
@@ -164,6 +165,24 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_unknown_ports_title),
                 checked = ui.unknownPortAlerts,
                 onCheckedChange = onUnknownPortAlertsChange,
+            )
+        }
+
+        ExpandableCard(
+            title = stringResource(R.string.settings_privacy_title),
+            subtitle = stringResource(R.string.settings_privacy_subtitle),
+            expanded = "privacy" in expanded,
+            onToggle = { toggle("privacy") },
+        ) {
+            CompactSwitchRow(
+                title = stringResource(R.string.settings_analytics_title),
+                checked = ui.analyticsEnabled,
+                onCheckedChange = onAnalyticsEnabledChange,
+            )
+            Text(
+                stringResource(R.string.settings_analytics_desc),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 

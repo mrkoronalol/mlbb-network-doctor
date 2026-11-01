@@ -21,6 +21,7 @@ object Analytics {
 
     private const val PREFS = "mlbb_analytics"
     private const val KEY_DEVICE_ID = "device_id"
+    private const val KEY_ENABLED = "analytics_enabled"
     private const val MAX_EVENTS_BATCH = 200
     private const val MAX_IPS_BATCH = 200
     private const val MAX_EVENTS_KEPT = 2000
@@ -33,10 +34,14 @@ object Analytics {
     @Volatile
     private var prefs: SharedPreferences? = null
 
+    @Volatile
+    private var enabled = true
+
     fun initialize(context: Context) {
         if (dao != null) return
         val app = context.applicationContext
         prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        enabled = prefs?.getBoolean(KEY_ENABLED, true) ?: true
         val database = AnalyticsDatabase.get(app)
         dao = database.dao()
         scope.launch {
@@ -49,7 +54,36 @@ object Analytics {
         }
     }
 
+    /** Отправка анонимной статистики включена? По умолчанию — да. */
+    fun isEnabled(context: Context): Boolean {
+        initialize(context)
+        return enabled
+    }
+
+    /**
+     * Переключатель приватности. При выключении сразу очищает локальную очередь,
+     * чтобы накопленные события и IP не ушли на сервер позже.
+     */
+    fun setEnabled(context: Context, value: Boolean) {
+        initialize(context)
+        enabled = value
+        prefs?.edit()?.putBoolean(KEY_ENABLED, value)?.apply()
+        if (!value) {
+            scope.launch { clearQueue() }
+        }
+    }
+
+    /** Удаляет всё, что ещё не отправлено (события и IP). */
+    suspend fun clearQueue() {
+        val database = dao ?: return
+        runCatching {
+            database.clearEvents()
+            database.clearIps()
+        }
+    }
+
     fun track(name: String, properties: Map<String, Any?> = emptyMap()) {
+        if (!enabled) return
         val database = dao ?: return
         val json = JSONObject()
         properties.forEach { (key, value) -> json.put(key, value ?: JSONObject.NULL) }
@@ -74,6 +108,7 @@ object Analytics {
         country: String? = null,
         pingMs: Long? = null,
     ) {
+        if (!enabled) return
         val database = dao ?: return
         val normalized = protocol.lowercase().ifBlank { "tcp" }
         scope.launch {
@@ -97,6 +132,11 @@ object Analytics {
 
     /** Отправляет накопленные события и IP. Возвращает false, если сеть недоступна. */
     suspend fun flush(context: Context): Boolean = withContext(Dispatchers.IO) {
+        initialize(context)
+        if (!enabled) {
+            clearQueue()
+            return@withContext true
+        }
         val database = dao ?: return@withContext false
         val base = MetaRepository.apiBase(context).trimEnd('/')
         if (base.isBlank()) return@withContext false

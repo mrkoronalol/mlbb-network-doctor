@@ -118,6 +118,7 @@ class MainActivity : ComponentActivity() {
                     onRefreshRules = viewModel::refreshRemoteRules,
                     onUnknownPortAlertsChange = viewModel::setUnknownPortAlerts,
                     onStableOnlyAlertsChange = viewModel::setStableOnlyAlerts,
+                    onAnalyticsEnabledChange = viewModel::setAnalyticsEnabled,
                 )
             }
         }

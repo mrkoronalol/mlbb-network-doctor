@@ -21,6 +21,10 @@ class TelemetryWorker(
 
     override suspend fun doWork(): Result {
         Analytics.initialize(applicationContext)
+        if (!Analytics.isEnabled(applicationContext)) {
+            Analytics.clearQueue()
+            return Result.success()
+        }
         return if (Analytics.flush(applicationContext)) {
             Result.success()
         } else {
