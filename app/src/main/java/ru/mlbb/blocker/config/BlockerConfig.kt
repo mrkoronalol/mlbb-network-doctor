@@ -20,10 +20,17 @@ object BlockerConfig {
                 profile?.allowedCidrs.orEmpty() +
                 if (store.allowStartupServer) StartupEndpoints.CIDRS else emptyList()
             ).distinct()
+        val loginRules = if (store.allowStartupServer) {
+            StartupEndpoints.LOGIN_POOL_CIDRS
+        } else {
+            emptyList()
+        }
         return SingBoxConfigBuilder.build(
             rules = rules,
             profileRules = profileRules,
             allowRules = allowRules,
+            loginRules = loginRules,
+            loginPorts = if (loginRules.isEmpty()) emptyList() else listOf(StartupEndpoints.LOGIN_PORT),
             blockMatchPorts = profile?.blockOtherMatchServers == true,
             discoveryMode = store.discoveryMode || System.currentTimeMillis() < store.discoveryUntil,
             clashPort = port,

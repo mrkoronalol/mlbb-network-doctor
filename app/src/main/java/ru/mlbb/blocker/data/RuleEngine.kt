@@ -19,6 +19,8 @@ data class BlockerPolicy(
     val profileBlockCidrs: List<String> = emptyList(),
     val matchPorts: Set<Int> = GamePorts.MATCH_PORTS,
     val blockOtherMatchPorts: Boolean = false,
+    val loginCidrs: List<String> = emptyList(),
+    val loginPorts: Set<Int> = emptySet(),
 )
 
 object RuleEngine {
@@ -38,6 +40,11 @@ object RuleEngine {
         }
         policy.userBlockCidrs.firstOrNull { Cidr.contains(it, ip) }?.let {
             return RouteDecision(RouteAction.SINK, "user blocklist", it)
+        }
+        if (port in policy.loginPorts) {
+            policy.loginCidrs.firstOrNull { Cidr.contains(it, ip) }?.let {
+                return RouteDecision(RouteAction.DIRECT, "login pool", it)
+            }
         }
         if (port in policy.matchPorts) {
             policy.profileBlockCidrs.firstOrNull { Cidr.contains(it, ip) }?.let {

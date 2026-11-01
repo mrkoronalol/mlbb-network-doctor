@@ -205,4 +205,53 @@ class SingBoxConfigBuilderTest {
             assertFalse(rules.getJSONObject(index).optString("outbound") == "sink")
         }
     }
+
+    @Test
+    fun loginPoolIsAllowedOnMatchmakingPortOnly() {
+        val config = JSONObject(
+            SingBoxConfigBuilder.build(
+                rules = listOf("154.85.91.0/24"),
+                profileRules = listOf("154.85.91.0/24"),
+                loginRules = listOf("154.85.91.0/24"),
+                loginPorts = listOf(10003),
+                blockMatchPorts = true,
+                discoveryMode = false,
+                clashPort = 39090,
+                clashSecret = "test-secret",
+            ),
+        )
+        val rules = config.getJSONObject("route").getJSONArray("rules")
+        var userBlockIndex = -1
+        var loginIndex = -1
+        var profileBlockIndex = -1
+        var catchAllIndex = -1
+        for (index in 0 until rules.length()) {
+            val rule = rules.getJSONObject(index)
+            val outbound = rule.optString("outbound")
+            if (outbound == "sink" && rule.has("ip_cidr") &&
+                !rule.has("port") && !rule.has("port_range")
+            ) {
+                userBlockIndex = index
+            }
+            if (outbound == "direct" && rule.has("ip_cidr") && rule.has("port")) {
+                loginIndex = index
+            }
+            if (outbound == "sink" && rule.has("ip_cidr") &&
+                (rule.has("port") || rule.has("port_range"))
+            ) {
+                profileBlockIndex = index
+            }
+            if (outbound == "sink" && !rule.has("ip_cidr") && rule.has("port")) {
+                catchAllIndex = index
+            }
+        }
+        assertTrue(userBlockIndex >= 0)
+        assertTrue(loginIndex > userBlockIndex)
+        assertTrue(profileBlockIndex > loginIndex)
+        assertTrue(catchAllIndex > loginIndex)
+        assertEquals(
+            10003,
+            rules.getJSONObject(loginIndex).getJSONArray("port").getInt(0),
+        )
+    }
 }

@@ -4,9 +4,12 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -120,6 +123,7 @@ class MainActivity : ComponentActivity() {
                     onStableOnlyAlertsChange = viewModel::setStableOnlyAlerts,
                     onAnalyticsEnabledChange = viewModel::setAnalyticsEnabled,
                     onRunPingDiagnostics = viewModel::runPingDiagnostics,
+                    onRequestBatteryExemption = ::requestBatteryExemption,
                 )
             }
         }
@@ -128,6 +132,26 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.refreshMlbbInstalled()
+        viewModel.ensureVpnRunning()
+    }
+
+    private fun requestBatteryExemption() {
+        val power = getSystemService(PowerManager::class.java)
+        if (power?.isIgnoringBatteryOptimizations(packageName) == true) {
+            runCatching {
+                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+            }
+            return
+        }
+        val request = Intent(
+            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+            Uri.parse("package:$packageName"),
+        )
+        runCatching { startActivity(request) }.onFailure {
+            runCatching {
+                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+            }
+        }
     }
 
     private fun toggleBlocker() {

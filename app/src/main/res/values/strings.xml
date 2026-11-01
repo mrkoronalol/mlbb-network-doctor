@@ -12,7 +12,8 @@
     <string name="main_subtitle">Диагностика сети и адаптация к пингу MLBB</string>
     <string name="connect">Включить блокировку</string>
     <string name="disconnect">Выключить</string>
-    <string name="rules_count">Правил: %1$d</string>
+    <string name="rules_count">Правил/сетей: %1$d</string>
+    <string name="rules_stat">Правил/сетей</string>
     <string name="discovery_title">Обнаружение серверов</string>
     <string name="discovery_hint">Включите блокировку, зайдите в MLBB и посмотрите, к каким IP подключается игра. Московские серверы можно добавить в блоклист.</string>
     <string name="connections_tab">Подключения</string>
@@ -155,4 +156,13 @@
     <string name="low_ping_filter">Только для высокого пинга</string>
     <string name="low_ping_hint">Герои, которые прощают задержку: танки, AOE-маги, саппорты</string>
     <string name="low_ping_badge">Lag-friendly</string>
+    <string name="settings_reliability_title">Надёжность</string>
+    <string name="settings_reliability_subtitle">VPN в фоне и батарея</string>
+    <string name="settings_battery_ok">Оптимизация батареи отключена</string>
+    <string name="settings_battery_bad">Оптимизация батареи включена</string>
+    <string name="settings_battery_action">Отключить</string>
+    <string name="settings_battery_settings">Настройки</string>
+    <string name="settings_battery_hint">На realme/OPPO также включите автозапуск и «Разрешить фоновую активность»: иначе система может убить VPN во время игры.</string>
+    <string name="settings_allow_login_title">Разрешать логин-пул</string>
+    <string name="settings_allow_login_desc">154.85.91.151 и весь 154.85.91.0/24:10003. Без этого часть сессий не входит в игру; фильтр матч-серверов ослабляется.</string>
 </resources>

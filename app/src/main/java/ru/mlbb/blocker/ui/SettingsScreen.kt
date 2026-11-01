@@ -70,6 +70,7 @@ fun SettingsScreen(
     onUnknownPortAlertsChange: (Boolean) -> Unit,
     onStableOnlyAlertsChange: (Boolean) -> Unit,
     onAnalyticsEnabledChange: (Boolean) -> Unit,
+    onRequestBatteryExemption: () -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(setOf("blocking")) }
     var showApiDialog by remember { mutableStateOf(false) }
@@ -112,6 +113,49 @@ fun SettingsScreen(
                 title = "Автозапуск после перезагрузки",
                 checked = ui.autoStart,
                 onCheckedChange = onAutoStartChange,
+            )
+        }
+
+        ExpandableCard(
+            title = stringResource(R.string.settings_reliability_title),
+            subtitle = stringResource(R.string.settings_reliability_subtitle),
+            expanded = "reliability" in expanded,
+            onToggle = { toggle("reliability") },
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(
+                        if (ui.batteryOptimizationIgnored) {
+                            R.string.settings_battery_ok
+                        } else {
+                            R.string.settings_battery_bad
+                        },
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (ui.batteryOptimizationIgnored) {
+                        AppColors.Success
+                    } else {
+                        AppColors.Warning
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onRequestBatteryExemption) {
+                    Text(
+                        stringResource(
+                            if (ui.batteryOptimizationIgnored) {
+                                R.string.settings_battery_settings
+                            } else {
+                                R.string.settings_battery_action
+                            },
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+            Text(
+                stringResource(R.string.settings_battery_hint),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
@@ -193,9 +237,14 @@ fun SettingsScreen(
             onToggle = { toggle("servers") },
         ) {
             CompactSwitchRow(
-                title = "Разрешать основной сервер .151",
+                title = stringResource(R.string.settings_allow_login_title),
                 checked = ui.allowStartupServer,
                 onCheckedChange = onAllowStartupServerChange,
+            )
+            Text(
+                stringResource(R.string.settings_allow_login_desc),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(

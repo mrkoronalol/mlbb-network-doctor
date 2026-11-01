@@ -136,6 +136,7 @@ fun BlockerApp(
     onStableOnlyAlertsChange: (Boolean) -> Unit,
     onAnalyticsEnabledChange: (Boolean) -> Unit,
     onRunPingDiagnostics: () -> Unit,
+    onRequestBatteryExemption: () -> Unit,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
@@ -289,6 +290,7 @@ fun BlockerApp(
                         onUnknownPortAlertsChange = onUnknownPortAlertsChange,
                         onStableOnlyAlertsChange = onStableOnlyAlertsChange,
                         onAnalyticsEnabledChange = onAnalyticsEnabledChange,
+                        onRequestBatteryExemption = onRequestBatteryExemption,
                     )
                 }
             }
@@ -662,7 +664,7 @@ private fun HomeScreen(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatCard("Правила", ui.effectiveRuleCount.toString(), Modifier.weight(1f))
+            StatCard(stringResource(R.string.rules_stat), ui.effectiveRuleCount.toString(), Modifier.weight(1f))
             StatCard("Собрано IP", ui.connections.size.toString(), Modifier.weight(1f))
         }
 

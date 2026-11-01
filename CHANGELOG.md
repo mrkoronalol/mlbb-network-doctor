@@ -9,6 +9,10 @@
 - **Ping diagnostics** (Monitor → Диагностика пинга): probes every known match server, shows the 5 fastest and the 5 blocked by the current profile, and sends anonymized results to `POST /api/v1/telemetry/ping`.
 - Meta tab: **Только для высокого пинга** filter backed by `GET /api/v1/meta/low-ping`.
 - `MetaHero` now carries `pingSensitivity` (LOW / MEDIUM / HIGH) from the site.
+- **Login pool allowance**: `154.85.91.0/24:10003` is now allowed together with `.151`, so matchmaking does not break when the client picks `.152/.155/.156/.157`. Toggle: Settings → Серверы.
+- **Sticky VPN**: `START_STICKY` + restore after a system kill; on app resume the service is restarted if it was running before (`lastRunning`).
+- **Battery reliability**: request battery-optimization exemption, new «Надёжность» section with the realme/OPPO background hint.
+- Rule counter now includes allow-only networks, so the DV profile no longer shows «Правил: 0».
 
 ## Experimental audit 2026-11-01 (no version bump)
 

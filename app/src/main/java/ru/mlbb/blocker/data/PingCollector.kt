@@ -68,9 +68,12 @@ object PingCollector {
         PingReport(fastest = fastest, blocked = blocked)
     }
 
-    fun policyFor(profile: RegionProfile?): BlockerPolicy = BlockerPolicy(
-        allowCidrs = profile?.allowedCidrs.orEmpty(),
-        profileBlockCidrs = profile?.rules?.map { it.first }.orEmpty(),
-        blockOtherMatchPorts = profile?.blockOtherMatchServers == true,
-    )
+    fun policyFor(profile: RegionProfile?, allowLoginPool: Boolean = true): BlockerPolicy =
+        BlockerPolicy(
+            allowCidrs = profile?.allowedCidrs.orEmpty(),
+            profileBlockCidrs = profile?.rules?.map { it.first }.orEmpty(),
+            blockOtherMatchPorts = profile?.blockOtherMatchServers == true,
+            loginCidrs = if (allowLoginPool) StartupEndpoints.LOGIN_POOL_CIDRS else emptyList(),
+            loginPorts = if (allowLoginPool) setOf(StartupEndpoints.LOGIN_PORT) else emptySet(),
+        )
 }

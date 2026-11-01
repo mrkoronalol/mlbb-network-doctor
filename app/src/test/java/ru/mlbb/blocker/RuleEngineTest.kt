@@ -17,6 +17,8 @@ class RuleEngineTest {
         userBlockCidrs = listOf("92.223.91.0/24"),
         profileBlockCidrs = listOf("146.185.199.0/24"),
         blockOtherMatchPorts = true,
+        loginCidrs = StartupEndpoints.LOGIN_POOL_CIDRS,
+        loginPorts = setOf(StartupEndpoints.LOGIN_PORT),
     )
 
     @Test
@@ -84,14 +86,20 @@ class RuleEngineTest {
             startupCidrs = StartupEndpoints.CIDRS,
             profileBlockCidrs = profile.rules.map { it.first },
             blockOtherMatchPorts = profile.blockOtherMatchServers,
+            loginCidrs = StartupEndpoints.LOGIN_POOL_CIDRS,
+            loginPorts = setOf(StartupEndpoints.LOGIN_PORT),
         )
         assertEquals(
             RouteAction.DIRECT,
             RuleEngine.decide("92.223.80.65", 5558, dvPolicy).action,
         )
         assertEquals(
-            RouteAction.SINK,
+            RouteAction.DIRECT,
             RuleEngine.decide("154.85.91.157", 10003, dvPolicy).action,
+        )
+        assertEquals(
+            RouteAction.SINK,
+            RuleEngine.decide("154.85.91.157", 5558, dvPolicy).action,
         )
         assertEquals(
             RouteAction.SINK,
@@ -108,6 +116,12 @@ class RuleEngineTest {
         assertEquals(
             RouteAction.DIRECT,
             RuleEngine.decide("92.223.80.65", 30021, dvPolicy).action,
+        )
+
+        val withoutLoginPool = dvPolicy.copy(loginCidrs = emptyList(), loginPorts = emptySet())
+        assertEquals(
+            RouteAction.SINK,
+            RuleEngine.decide("154.85.91.157", 10003, withoutLoginPool).action,
         )
     }
 }

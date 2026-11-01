@@ -16,6 +16,8 @@ object SingBoxConfigBuilder {
         rules: List<String>,
         profileRules: List<String> = emptyList(),
         allowRules: List<String> = emptyList(),
+        loginRules: List<String> = emptyList(),
+        loginPorts: List<Int> = emptyList(),
         blockMatchPorts: Boolean = false,
         discoveryMode: Boolean,
         clashPort: Int,
@@ -106,6 +108,15 @@ object SingBoxConfigBuilder {
                     .put("ip_cidr", JSONArray(rules))
                     .put("action", "route")
                     .put("outbound", "sink"),
+            )
+        }
+        if (!discoveryMode && loginRules.isNotEmpty() && loginPorts.isNotEmpty()) {
+            routeRules.put(
+                JSONObject()
+                    .put("ip_cidr", JSONArray(loginRules))
+                    .put("port", JSONArray(loginPorts))
+                    .put("action", "route")
+                    .put("outbound", "direct"),
             )
         }
         if (!discoveryMode && profileRules.isNotEmpty()) {

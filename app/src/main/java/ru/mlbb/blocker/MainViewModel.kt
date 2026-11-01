@@ -1,10 +1,12 @@
 package ru.mlbb.blocker
 
 import android.app.Application
+import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.net.VpnService
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -95,6 +97,7 @@ data class UiState(
     val allowStartupServer: Boolean = true,
     val showOnboarding: Boolean = false,
     val overlayPermissionGranted: Boolean = false,
+    val batteryOptimizationIgnored: Boolean = false,
     val updateInfo: UpdateInfo? = null,
     val updateChecking: Boolean = false,
     val updateDownload: UpdateDownloadState = UpdateDownloadState.Idle,
@@ -146,6 +149,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             showOnboarding = !store.onboardingDone,
             overlayPermissionGranted = runCatching { Settings.canDrawOverlays(application) }
                 .getOrDefault(false),
+            batteryOptimizationIgnored = runCatching {
+                (application.getSystemService(Context.POWER_SERVICE) as PowerManager)
+                    .isIgnoringBatteryOptimizations(application.packageName)
+            }.getOrDefault(false),
             unknownPortAlerts = store.unknownPortAlerts,
             stableOnlyAlerts = store.stableOnlyAlerts,
             analyticsEnabled = Analytics.isEnabled(application),
@@ -455,7 +462,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val profile = store.selectedProfile?.let(RegionProfiles::byId)
             val report = withContext(Dispatchers.IO) {
-                PingCollector.collect(PingCollector.policyFor(profile))
+                PingCollector.collect(PingCollector.policyFor(profile, store.allowStartupServer))
             }
             _ui.update { it.copy(pingRunning = false, pingReport = report) }
             val sent = withContext(Dispatchers.IO) {
@@ -710,9 +717,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 overlayPermissionGranted = runCatching {
                     Settings.canDrawOverlays(getApplication())
                 }.getOrDefault(false),
+                batteryOptimizationIgnored = batteryOptimizationIgnored(),
             )
         }
     }
+
+    /**
+     * Watchdog: если блокировка была включена, но процесс/VPN убили (OEM или OOM),
+     * при возврате в приложение поднимаем сервис снова.
+     */
+    fun ensureVpnRunning() {
+        if (!store.lastRunning || isRunning() || _ui.value.isBusy) return
+        val permissionGranted = runCatching {
+            VpnService.prepare(getApplication()) == null
+        }.getOrDefault(false)
+        if (!permissionGranted) return
+        startVpn()
+    }
+
+    private fun batteryOptimizationIgnored(): Boolean = runCatching {
+        val power = getApplication<Application>()
+            .getSystemService(Context.POWER_SERVICE) as PowerManager
+        power.isIgnoringBatteryOptimizations(getApplication<Application>().packageName)
+    }.getOrDefault(false)
 
     fun setFastReject(enabled: Boolean) {
         store.fastReject = enabled
@@ -801,12 +828,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun profileValues(): Set<String> {
-        return store.selectedProfile
-            ?.let(RegionProfiles::byId)
-            ?.rules
-            ?.map { it.first }
-            ?.toSet()
-            ?: emptySet()
+        val profile = store.selectedProfile?.let(RegionProfiles::byId) ?: return emptySet()
+        // allow-only профиль задаёт не блок-правила, а allow-сети: показываем их
+        // в счётчике, иначе «Правил: 0» выглядит как неработающий профиль.
+        return (profile.rules.map { it.first } + profile.allowedCidrs).toSet()
     }
 
     private fun effectiveRuleCount(): Int {

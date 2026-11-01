@@ -120,9 +120,27 @@ class BlockerVpnService : VpnService() {
                 }
             }
 
+            // Android перезапускает sticky-сервис с null-intent после kill.
+            // Если блокировка была включена — поднимаем TUN заново.
+            null -> {
+                val store = BlocklistStore(this)
+                if (!store.lastRunning) {
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
+                if (started.compareAndSet(false, true)) {
+                    stopping.set(false)
+                    startAttempts.set(0)
+                    sessionPort = BlockerConfig.newPort()
+                    sessionSecret = BlockerConfig.newSecret()
+                    BlockerRepository.log("VPN перезапущен системой — восстанавливаю блокировку")
+                    startBlocking()
+                }
+            }
+
             else -> Unit
         }
-        return START_NOT_STICKY
+        return if (BlocklistStore(this).lastRunning) START_STICKY else START_NOT_STICKY
     }
 
     private fun startBlocking() {
@@ -268,6 +286,7 @@ class BlockerVpnService : VpnService() {
         BlockerRepository.setStatus(BlockerStatus.Error(message))
         BlockerRepository.log("Ошибка запуска: $message")
         started.set(false)
+        BlocklistStore(this).lastRunning = false
         scope.launch {
             withContext(Dispatchers.Main) {
                 runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
