@@ -49,6 +49,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import android.text.format.DateFormat
+import java.util.Date
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.mlbb.blocker.R
@@ -609,6 +611,7 @@ private fun PingDiagnosticsCard(
     running: Boolean,
     onRun: () -> Unit,
 ) {
+    val context = LocalContext.current
     EsportsCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -618,11 +621,28 @@ private fun PingDiagnosticsCard(
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text(
-                stringResource(R.string.diagnostics_title),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    stringResource(R.string.diagnostics_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f),
+                )
+                if (report != null) {
+                    Text(
+                        stringResource(
+                            R.string.diagnostics_updated,
+                            DateFormat.getTimeFormat(context)
+                                .format(Date(report.measuredAt)),
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
             OutlinedButton(
                 onClick = onRun,
                 enabled = !running,
@@ -691,5 +711,18 @@ private fun PingDiagnosticRow(result: PingTargetResult) {
             fontWeight = FontWeight.SemiBold,
             color = if (result.blocked) AppColors.Danger else AppColors.Success,
         )
+        val details = buildList {
+            result.jitterMs?.takeIf { it > 0 }?.let { add("±$it") }
+            if (result.lossPercent > 0) add("потери ${result.lossPercent}%")
+        }.joinToString(" · ")
+        if (details.isNotBlank()) {
+            Text(
+                details,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 6.dp),
+                maxLines = 1,
+            )
+        }
     }
 }

@@ -486,6 +486,10 @@ private fun HeroDetailsSheet(
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Pill(hero.tier.title, tierColor(hero.tier))
                     if (hero.role.isNotBlank()) Pill(hero.role, AppColors.Cyan)
+                    when (hero.pingSensitivity?.uppercase()) {
+                        "LOW" -> Pill(stringResource(R.string.low_ping_badge), AppColors.Success)
+                        "HIGH" -> Pill(stringResource(R.string.high_ping_badge), AppColors.Warning)
+                    }
                 }
                 Text(
                     hero.displayLanes.joinToString(" · ") { it.title },

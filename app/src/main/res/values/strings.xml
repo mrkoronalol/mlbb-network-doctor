@@ -152,10 +152,12 @@
     <string name="diagnostics_blocked">Заблокированы профилем</string>
     <string name="diagnostics_empty">Нажмите «Замерить», чтобы увидеть лучшие серверы</string>
     <string name="diagnostics_none">Серверы не ответили. Проверьте соединение.</string>
+    <string name="diagnostics_updated">Обновлено: %1$s</string>
     <string name="diagnostics_sent">Пинг отправлен на сайт</string>
     <string name="low_ping_filter">Только для высокого пинга</string>
     <string name="low_ping_hint">Герои, которые прощают задержку: танки, AOE-маги, саппорты</string>
     <string name="low_ping_badge">Lag-friendly</string>
+    <string name="high_ping_badge">Нужен низкий пинг</string>
     <string name="settings_reliability_title">Надёжность</string>
     <string name="settings_reliability_subtitle">VPN в фоне и батарея</string>
     <string name="settings_battery_ok">Оптимизация батареи отключена</string>

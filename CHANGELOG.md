@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.20.1 — diagnostics polish
+
+- Ping diagnostics show **jitter** (`±N`) and **packet loss** (`потери N%`), plus the
+  time of the last measurement («Обновлено: HH:mm»).
+- Meta hero sheet shows a **Lag-friendly / Нужен низкий пинг** badge based on
+  `pingSensitivity`.
+- Added unit tests for the login-pool policy and `AutoProfileAdvisor`.
+- No release published yet: tag `v0.20.1` is created at deploy time.
+
 ## 0.20.0 — MLBB Network Doctor
 
 - Rebrand: the app is now **MLBB Network Doctor** (launcher, header, description). The VPN filter is still there; it moved into the dashboard.

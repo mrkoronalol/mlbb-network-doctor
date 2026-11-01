@@ -15,12 +15,15 @@ data class PingTarget(
 data class PingTargetResult(
     val target: PingTarget,
     val pingMs: Long?,
+    val jitterMs: Long?,
+    val lossPercent: Int,
     val blocked: Boolean,
 )
 
 data class PingReport(
     val fastest: List<PingTargetResult>,
     val blocked: List<PingTargetResult>,
+    val measuredAt: Long,
 )
 
 /**
@@ -53,6 +56,8 @@ object PingCollector {
                 PingTargetResult(
                     target = target,
                     pingMs = summary.avgMs,
+                    jitterMs = summary.jitterMs,
+                    lossPercent = summary.lossPercent,
                     blocked = RuleEngine.decide(target.ip, target.port, policy).action ==
                         RouteAction.SINK,
                 )
@@ -65,7 +70,11 @@ object PingCollector {
         val blocked = results
             .filter { it.blocked }
             .sortedBy { it.pingMs ?: Long.MAX_VALUE }
-        PingReport(fastest = fastest, blocked = blocked)
+        PingReport(
+            fastest = fastest,
+            blocked = blocked,
+            measuredAt = System.currentTimeMillis(),
+        )
     }
 
     fun policyFor(profile: RegionProfile?, allowLoginPool: Boolean = true): BlockerPolicy =
