@@ -429,6 +429,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startMatch(gamePackage: String) {
+        MatchPhaseController.startQueue()
         viewModelScope.launch {
             val profileIds = store.selectedProfile?.let { setOf(it) } ?: emptySet()
             val id = MonitorRepository.startMatchSession(gamePackage, profileIds)
@@ -565,6 +566,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun finishMatch(result: String) {
+        MatchPhaseController.onSessionEnd()
         val id = _ui.value.activeMatchId ?: return
         MonitorRepository.finishMatchSession(id, result)
         _ui.update { it.copy(activeMatchId = null) }
@@ -847,9 +849,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             val report = DebugTrace.analyseQueueProbes(DebugTrace.snapshot()) { ip ->
-                RegionIpRepository.allCached()
-                    .firstOrNull { Cidr.contains(it.cidr, ip) }
-                    ?.region
+                RegionIpRepository.regionOf(ip)
             }
             _ui.update { it.copy(hypothesisRunning = false, hypothesisReport = report.summary) }
         }

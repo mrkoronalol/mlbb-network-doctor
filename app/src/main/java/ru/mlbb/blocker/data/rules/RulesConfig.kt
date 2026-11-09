@@ -71,6 +71,7 @@ object BuiltInRules {
 
     val FAR_EAST_SERVERS = listOf(
         "92.223.80.0/24" to "Хабаровск/ДВ",
+        "5.188.3.0/24" to "Хабаровск, матч-сервер 5.188.3.161",
     )
 
     val OTHER_REGIONS = listOf(

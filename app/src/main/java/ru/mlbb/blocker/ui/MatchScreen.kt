@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.mlbb.blocker.UiState
 import ru.mlbb.blocker.data.KnownServers
+import ru.mlbb.blocker.data.MatchPhase
 import ru.mlbb.blocker.data.RegionProfiles
 import ru.mlbb.blocker.data.db.MatchSessionEntity
 import java.text.SimpleDateFormat
@@ -106,6 +107,19 @@ fun MatchScreen(
             Text(
                 if (ui.isRunning) "Открыть MLBB" else "Включить блокировку и открыть MLBB",
                 style = MaterialTheme.typography.titleMedium,
+            )
+        }
+
+        if (ui.phase != MatchPhase.IDLE) {
+            Text(
+                "Фаза: " + when (ui.phase) {
+                    MatchPhase.QUEUE -> "очередь — фильтры активны"
+                    MatchPhase.MATCH_FOUND -> "матч найден — фильтры отключены"
+                    MatchPhase.IN_GAME -> "в игре — только задержка"
+                    MatchPhase.IDLE -> "ожидание"
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = AppColors.CyanLight,
             )
         }
 

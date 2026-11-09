@@ -95,6 +95,10 @@ class RuleEngineTest {
         )
         assertEquals(
             RouteAction.DIRECT,
+            RuleEngine.decide("5.188.3.161", 5551, dvPolicy).action,
+        )
+        assertEquals(
+            RouteAction.DIRECT,
             RuleEngine.decide("154.85.91.157", 10003, dvPolicy).action,
         )
         assertEquals(

@@ -36,8 +36,7 @@ class MatchPhaseControllerTest {
     }
 
     @Test
-    fun matchTrafficWithoutMatchFoundDoesNothing() {
-        MatchPhaseController.reset()
+    fun matchTrafficWithoutMatchFoundDoesNothing() {        MatchPhaseController.reset()
         MatchPhaseController.onMatchTraffic()
         assertEquals(MatchPhase.IDLE, MatchPhaseController.phase.value)
     }
@@ -63,8 +62,19 @@ class MatchPhaseControllerTest {
     }
 
     @Test
-    fun filterMapping() {
-        assertEquals(PhaseFilter.ACTIVE, MatchPhaseController.filterFor(MatchPhase.IDLE))
+    fun startQueueEntersQueueExplicitly() {
+        MatchPhaseController.reset()
+        MatchPhaseController.startQueue()
+        assertEquals(MatchPhase.QUEUE, MatchPhaseController.phase.value)
+
+        // Повторный старт не ломает найденный матч.
+        MatchPhaseController.onMatchFound()
+        MatchPhaseController.startQueue()
+        assertEquals(MatchPhase.MATCH_FOUND, MatchPhaseController.phase.value)
+    }
+
+    @Test
+    fun filterMapping() {        assertEquals(PhaseFilter.ACTIVE, MatchPhaseController.filterFor(MatchPhase.IDLE))
         assertEquals(PhaseFilter.ACTIVE, MatchPhaseController.filterFor(MatchPhase.QUEUE))
         assertEquals(PhaseFilter.BLOCKS_OFF, MatchPhaseController.filterFor(MatchPhase.MATCH_FOUND))
         assertEquals(PhaseFilter.DELAY_ONLY, MatchPhaseController.filterFor(MatchPhase.IN_GAME))

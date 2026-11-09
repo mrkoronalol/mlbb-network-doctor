@@ -39,6 +39,14 @@ object MatchPhaseController {
         touch()
     }
 
+    /** Явный старт очереди по кнопке «Начать поиск» — не зависит от трафика. */
+    fun startQueue() {
+        if (_phase.value == MatchPhase.IDLE || _phase.value == MatchPhase.IN_GAME) {
+            _phase.value = MatchPhase.QUEUE
+        }
+        touch()
+    }
+
     fun onMatchFound() {
         if (_phase.value == MatchPhase.QUEUE || _phase.value == MatchPhase.IDLE) {
             _phase.value = MatchPhase.MATCH_FOUND

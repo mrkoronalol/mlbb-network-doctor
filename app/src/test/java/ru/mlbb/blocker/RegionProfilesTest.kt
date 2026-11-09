@@ -37,7 +37,10 @@ class RegionProfilesTest {
 
     @Test
     fun farEastProfileAllowsOnlyFarEast() {
-        assertEquals(listOf("92.223.80.0/24"), RegionProfiles.FAR_EAST.allowedCidrs)
+        assertEquals(
+            listOf("92.223.80.0/24", "5.188.3.0/24"),
+            RegionProfiles.FAR_EAST.allowedCidrs,
+        )
         val values = RegionProfiles.FAR_EAST.rules.map { it.first }.toSet()
         assertTrue("154.85.91.0/24" in values)
         assertTrue("146.185.199.0/24" in values)

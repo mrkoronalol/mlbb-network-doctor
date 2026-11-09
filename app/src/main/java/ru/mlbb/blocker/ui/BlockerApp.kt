@@ -647,12 +647,13 @@ private fun HomeScreen(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    // 100..500 мс с шагом 50: 8 позиций, 7 промежуточных шагов.
                     Slider(
-                        value = ui.delayMs.toFloat(),
-                        onValueChange = { value ->
-                            onDelayMsChange((value / 50f).roundToInt() * 50)
+                        value = ((ui.delayMs - 100) / 50).toFloat(),
+                        onValueChange = { position ->
+                            onDelayMsChange(100 + position.roundToInt() * 50)
                         },
-                        valueRange = 100f..500f,
+                        valueRange = 0f..8f,
                         steps = 7,
                     )
                 }

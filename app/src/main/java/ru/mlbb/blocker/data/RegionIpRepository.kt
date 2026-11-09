@@ -20,6 +20,7 @@ object RegionIpRepository {
 
     val DEFAULTS: List<RegionIpEntity> = listOf(
         RegionIpEntity("DV:92.223.80.0/24", REGION_DV, "92.223.80.0/24", "Хабаровск"),
+        RegionIpEntity("DV:5.188.3.0/24", REGION_DV, "5.188.3.0/24", "Хабаровск, матч-сервер"),
         RegionIpEntity("NSK:146.185.199.0/24", REGION_NSK, "146.185.199.0/24", "Новосибирск"),
         RegionIpEntity("OTHER:92.223.91.0/24", REGION_OTHER, "92.223.91.0/24", "Екатеринбург"),
         RegionIpEntity("OTHER:146.185.197.0/24", REGION_OTHER, "146.185.197.0/24", "Ростов-на-Дону"),
@@ -31,12 +32,39 @@ object RegionIpRepository {
     @Volatile
     private var cached: List<RegionIpEntity> = DEFAULTS
 
+    /**
+     * Регион по IP: сначала встроенные диапазоны профилей (проверенный список),
+     * и только потом наша таблица/GeoIP. DB-IP путает 146.185.199.0/24 (НСК) с
+     * Москвой, поэтому доверять ей как источнику региона нельзя.
+     */
+    fun regionOf(ip: String): String? {
+        BUILTIN_REGIONS.firstOrNull { (cidr, _) -> Cidr.contains(cidr, ip) }?.let {
+            return it.second
+        }
+        cached.firstOrNull { Cidr.contains(it.cidr, ip) }?.let { return it.region }
+        return null
+    }
+
+    private val BUILTIN_REGIONS: List<Pair<String, String>> = listOf(
+        "5.188.3.0/24" to REGION_DV,
+        "92.223.80.0/24" to REGION_DV,
+        "146.185.199.0/24" to REGION_NSK,
+        "92.223.91.0/24" to REGION_OTHER,
+        "146.185.197.0/24" to REGION_OTHER,
+        "90.189.118.10/32" to REGION_OTHER,
+        "139.45.245.2/32" to REGION_OTHER,
+        "202.137.128.134/32" to REGION_OTHER,
+        "154.85.91.0/24" to REGION_MSK,
+        "66.253.15.0/24" to REGION_MSK,
+        "81.177.97.0/24" to REGION_MSK,
+    )
+
     /** Загружает диапазоны в память; при пустой таблице записывает дефолты. */
     suspend fun refresh(context: Context) {
         val dao = MonitorDatabase.get(context).regionIpDao()
-        if (dao.count() == 0) {
-            dao.upsert(DEFAULTS)
-        }
+        val stored = dao.all()
+        val missing = DEFAULTS.filter { default -> stored.none { it.key == default.key } }
+        if (missing.isNotEmpty()) dao.upsert(stored + missing)
         cached = dao.all().ifEmpty { DEFAULTS }
     }
 
