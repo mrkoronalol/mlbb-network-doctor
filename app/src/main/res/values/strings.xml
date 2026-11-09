@@ -192,4 +192,13 @@
     <string name="tun_stack_gvisor">gvisor</string>
     <string name="tun_stack_applied">Стек TUN применён — правила перезагружены</string>
     <string name="tun_stack_hint">Если пинг в игре выше, чем на ПК, переключите на system: он меньше нагружает Wi-Fi.</string>
+    <string name="settings_language_title">Язык интерфейса</string>
+    <string name="settings_language_subtitle">Русский, English, Indonesia, Filipino</string>
+    <string name="settings_language_hint">Системный — язык телефона. Выбор применяется сразу, VPN не перезапускается.</string>
+    <string name="home_tab">Главная</string>
+    <string name="match_tab">Матч</string>
+    <string name="monitor_tab">Монитор</string>
+    <string name="meta_tab">Мета</string>
+    <string name="discovery_tab">Обнаружение</string>
+    <string name="profile_off">не выбран</string>
 </resources>

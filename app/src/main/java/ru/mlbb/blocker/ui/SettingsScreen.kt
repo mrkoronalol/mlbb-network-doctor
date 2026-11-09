@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -27,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import ru.mlbb.blocker.BuildConfig
 import ru.mlbb.blocker.R
 import ru.mlbb.blocker.UiState
+import ru.mlbb.blocker.data.AppLanguage
 import ru.mlbb.blocker.data.geo.GeoIpStatus
 import ru.mlbb.blocker.data.meta.MetaRepository
 import ru.mlbb.blocker.data.rules.RulesSource
@@ -74,6 +78,7 @@ fun SettingsScreen(
     onRequestBatteryExemption: () -> Unit,
     onDebugTraceChange: (Boolean) -> Unit,
     onTunStackChange: (String) -> Unit,
+    onLanguageChange: (String) -> Unit,
     onExportTrace: () -> Unit,
     onRunHypothesisCheck: () -> Unit,
 ) {
@@ -441,6 +446,44 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
+        }
+
+        ExpandableCard(
+            title = stringResource(R.string.settings_language_title),
+            subtitle = stringResource(R.string.settings_language_subtitle),
+            expanded = "language" in expanded,
+            onToggle = { toggle("language") },
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                AppLanguage.tags().forEach { tag ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = ui.language == tag,
+                                onClick = { onLanguageChange(tag) },
+                                role = Role.RadioButton,
+                            )
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = ui.language == tag,
+                            onClick = null,
+                        )
+                        Text(
+                            AppLanguage.displayName(tag),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                }
+                Text(
+                    stringResource(R.string.settings_language_hint),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
 

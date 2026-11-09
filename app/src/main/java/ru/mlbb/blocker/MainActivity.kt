@@ -80,6 +80,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(ru.mlbb.blocker.data.LanguageWrapper.wrap(newBase))
+    }
+
+    /** Смена языка: сохраняем выбор и пересоздаём Activity (VPN не перезапускается). */
+    private fun changeLanguage(tag: String) {
+        ru.mlbb.blocker.data.AppLanguage.set(this, tag)
+        recreate()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val nightMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
@@ -147,6 +157,7 @@ class MainActivity : ComponentActivity() {
                     onDelayMsChange = viewModel::setDelayMs,
                     onDebugTraceChange = viewModel::setDebugTrace,
                     onTunStackChange = viewModel::setTunStack,
+                    onLanguageChange = ::changeLanguage,
                     onExportTrace = {
                         exportTraceLauncher.launch(
                             "mlbb-debug-trace-${System.currentTimeMillis()}.json",

@@ -24,6 +24,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import ru.mlbb.blocker.config.BlockerConfig
+import ru.mlbb.blocker.data.AppLanguage
 import ru.mlbb.blocker.data.BlockPreset
 import ru.mlbb.blocker.data.BlockRule
 import ru.mlbb.blocker.data.BlockerRepository
@@ -131,6 +132,7 @@ data class UiState(
     val shaperStats: ShaperStats = ShaperStats(),
     val debugTrace: Boolean = false,
     val tunStack: String = "system",
+    val language: String = "system",
     val hypothesisRunning: Boolean = false,
     val hypothesisReport: String? = null,
     val regionRanges: List<RegionIpEntity> = emptyList(),
@@ -178,6 +180,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             delayMs = store.delayMs,
             debugTrace = store.debugTrace,
             tunStack = store.tunStack,
+            language = AppLanguage.currentTag(application),
         ),
     )
     val ui: StateFlow<UiState> = _ui.asStateFlow()

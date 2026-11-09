@@ -145,6 +145,7 @@ fun BlockerApp(
     onDelayMsChange: (Int) -> Unit,
     onDebugTraceChange: (Boolean) -> Unit,
     onTunStackChange: (String) -> Unit,
+    onLanguageChange: (String) -> Unit,
     onExportTrace: () -> Unit,
     onRunHypothesisCheck: () -> Unit,
 ) {
@@ -305,6 +306,7 @@ fun BlockerApp(
                         onRequestBatteryExemption = onRequestBatteryExemption,
                         onDebugTraceChange = onDebugTraceChange,
                         onTunStackChange = onTunStackChange,
+                        onLanguageChange = onLanguageChange,
                         onExportTrace = onExportTrace,
                         onRunHypothesisCheck = onRunHypothesisCheck,
                     )

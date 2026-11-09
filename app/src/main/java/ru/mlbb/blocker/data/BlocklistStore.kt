@@ -183,6 +183,13 @@ class BlocklistStore(context: Context) {
             prefs.edit().putString(KEY_TUN_STACK, normalized).apply()
         }
 
+    /** Язык интерфейса: "system", "ru", "en", "id", "fil". */
+    var language: String
+        get() = prefs.getString(KEY_LANGUAGE, "system") ?: "system"
+        set(value) {
+            prefs.edit().putString(KEY_LANGUAGE, value).apply()
+        }
+
     var discoveryUntil: Long
         get() = prefs.getLong(KEY_DISCOVERY_UNTIL, 0L)
         set(value) {
@@ -386,5 +393,6 @@ class BlocklistStore(context: Context) {
         private const val KEY_DELAY_MS = "delay_ms"
         private const val KEY_DEBUG_TRACE = "debug_trace"
         private const val KEY_TUN_STACK = "tun_stack"
+        private const val KEY_LANGUAGE = "app_language"
     }
 }
