@@ -223,7 +223,7 @@ fun BlockerApp(
                     tonalElevation = 0.dp,
                 ) {
                     tabs.forEachIndexed { index, item ->
-                        NavigationItem(index, tab, item.label, item.icon) {
+                        NavigationItem(index, tab, stringResource(item.labelRes), item.icon) {
                             showAbout = false
                             tab = it
                         }
@@ -324,13 +324,13 @@ fun BlockerApp(
     }
 }
 
-private enum class AppTab(val label: String, val icon: ImageVector) {
-    Home("Главная", Icons.Default.Home),
-    Match("Матч", Icons.Default.PlayArrow),
-    Monitor("Монитор", Icons.Default.Search),
-    Blocklist("Блок", Icons.Default.Lock),
-    Meta("Мета", Icons.Default.Star),
-    Settings("Настройки", Icons.Default.Settings),
+private enum class AppTab(val label: String, val icon: ImageVector, val labelRes: Int) {
+    Home("Главная", Icons.Default.Home, R.string.home_tab),
+    Match("Матч", Icons.Default.PlayArrow, R.string.match_tab),
+    Monitor("Монитор", Icons.Default.Search, R.string.monitor_tab),
+    Blocklist("Блок", Icons.Default.Lock, R.string.blocklist_tab),
+    Meta("Мета", Icons.Default.Star, R.string.meta_tab),
+    Settings("Настройки", Icons.Default.Settings, R.string.settings_tab),
 }
 
 @Composable

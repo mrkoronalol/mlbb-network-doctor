@@ -201,4 +201,6 @@
     <string name="meta_tab">Мета</string>
     <string name="discovery_tab">Обнаружение</string>
     <string name="profile_off">не выбран</string>
+    <string name="match_screen_subtitle">Проверьте готовность и откройте игру.</string>
+    <string name="match_screen_title">Перед матчем</string>
 </resources>

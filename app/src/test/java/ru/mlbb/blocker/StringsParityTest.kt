@@ -36,8 +36,17 @@ class StringsParityTest {
     }
 
     @Test
-    fun coreUiKeysAreTranslated() {
-        val core = setOf(
+    fun everyBaseKeyIsTranslated() {
+        val base = keys("src/main/res/values")
+        for (lang in listOf("en", "id", "fil")) {
+            val translated = keys("src/main/res/values-$lang")
+            val missing = base - translated
+            assertTrue("values-$lang misses ${missing.size} keys: $missing", missing.isEmpty())
+        }
+    }
+
+    @Test
+    fun coreUiKeysAreTranslated() {        val core = setOf(
             "settings_tab",
             "home_tab",
             "match_tab",

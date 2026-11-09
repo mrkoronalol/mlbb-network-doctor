@@ -19,8 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.mlbb.blocker.UiState
+import ru.mlbb.blocker.R
 import ru.mlbb.blocker.data.KnownServers
 import ru.mlbb.blocker.data.MatchPhase
 import ru.mlbb.blocker.data.RegionProfiles
@@ -52,12 +54,12 @@ fun MatchScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Перед матчем",
+                    stringResource(R.string.match_screen_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    "Проверьте готовность и откройте игру.",
+                    stringResource(R.string.match_screen_subtitle),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
