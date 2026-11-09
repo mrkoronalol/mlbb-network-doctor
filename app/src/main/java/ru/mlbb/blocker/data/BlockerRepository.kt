@@ -28,11 +28,18 @@ object BlockerRepository {
     private val _logs = MutableStateFlow<List<String>>(emptyList())
     val logs: StateFlow<List<String>> = _logs.asStateFlow()
 
+    private val _shaperStats = MutableStateFlow(ShaperStats())
+    val shaperStats: StateFlow<ShaperStats> = _shaperStats.asStateFlow()
+
     private val stats = LinkedHashMap<String, ConnectionStat>()
     private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.US)
 
     fun setStatus(status: BlockerStatus) {
         _status.value = status
+    }
+
+    fun setShaperStats(stats: ShaperStats) {
+        _shaperStats.value = stats
     }
 
     fun log(message: String) {

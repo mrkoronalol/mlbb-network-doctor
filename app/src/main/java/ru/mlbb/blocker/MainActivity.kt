@@ -61,6 +61,25 @@ class MainActivity : ComponentActivity() {
         uri?.let(viewModel::prepareImport)
     }
 
+    private val exportTraceLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        if (uri != null) {
+            writeText(uri, viewModel.exportTraceJson(), getString(R.string.trace_exported))
+        }
+    }
+
+    private fun writeText(uri: Uri, text: String, successLabel: String) {
+        try {
+            contentResolver.openOutputStream(uri)?.use { stream ->
+                stream.write(text.toByteArray())
+            }
+            viewModel.showMessage(successLabel)
+        } catch (_: Throwable) {
+            viewModel.showMessage(getString(R.string.trace_export_failed))
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val nightMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
@@ -124,6 +143,15 @@ class MainActivity : ComponentActivity() {
                     onAnalyticsEnabledChange = viewModel::setAnalyticsEnabled,
                     onRunPingDiagnostics = viewModel::runPingDiagnostics,
                     onRequestBatteryExemption = ::requestBatteryExemption,
+                    onFilterModeChange = viewModel::setFilterMode,
+                    onDelayMsChange = viewModel::setDelayMs,
+                    onDebugTraceChange = viewModel::setDebugTrace,
+                    onExportTrace = {
+                        exportTraceLauncher.launch(
+                            "mlbb-debug-trace-${System.currentTimeMillis()}.json",
+                        )
+                    },
+                    onRunHypothesisCheck = viewModel::runHypothesisCheck,
                 )
             }
         }

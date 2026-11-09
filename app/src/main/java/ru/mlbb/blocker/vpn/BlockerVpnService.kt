@@ -37,7 +37,11 @@ import ru.mlbb.blocker.data.BlockerRepository
 import ru.mlbb.blocker.data.BlockerStatus
 import ru.mlbb.blocker.data.BlocklistStore
 import ru.mlbb.blocker.data.GamePorts
+import ru.mlbb.blocker.data.MatchPhase
+import ru.mlbb.blocker.data.MatchPhaseController
 import ru.mlbb.blocker.data.PortOverrides
+import ru.mlbb.blocker.data.RegionIpRepository
+import ru.mlbb.blocker.data.StartupEndpoints
 import ru.mlbb.blocker.data.UnknownPortDetector
 import ru.mlbb.blocker.data.analytics.Analytics
 import ru.mlbb.blocker.data.geo.GeoIpRepository
@@ -68,9 +72,12 @@ class BlockerVpnService : VpnService() {
     private var discoveryJob: Job? = null
     private var allowExpiryJob: Job? = null
     private var coreLogMonitor: CoreLogMonitor? = null
+    private var delayShaper: DelayShaper? = null
+    private var phaseReloadJob: Job? = null
 
     private var sessionPort: Int = 0
     private var sessionSecret: String = ""
+    private var sessionDelayPort: Int = 0
     private var lastRuleCount: Int = 0
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -161,7 +168,22 @@ class BlockerVpnService : VpnService() {
                 if (stopping.get()) return@launch
 
                 LibboxSetup.ensure(this@BlockerVpnService)
-                val config = BlockerConfig.build(this@BlockerVpnService, sessionPort, sessionSecret)
+                RegionIpRepository.refresh(this@BlockerVpnService)
+                val runningStore = BlocklistStore(this@BlockerVpnService)
+                if (runningStore.filterMode == "delay") {
+                    delayShaper?.stop()
+                    delayShaper = DelayShaper { BlocklistStore(this@BlockerVpnService).delayMs }
+                    sessionDelayPort = delayShaper?.start()?.first ?: 0
+                } else {
+                    sessionDelayPort = 0
+                }
+                val config = BlockerConfig.build(
+                    this@BlockerVpnService,
+                    sessionPort,
+                    sessionSecret,
+                    MatchPhaseController.phase.value,
+                    sessionDelayPort,
+                )
                 Libbox.checkConfig(config)
                 File(filesDir, "current-config.json").writeText(config)
 
@@ -204,8 +226,24 @@ class BlockerVpnService : VpnService() {
                 )
                 startConnectionMonitor()
                 startCoreLogMonitor()
+                startPhaseReloadJob()
             } catch (t: Throwable) {
                 fail(t)
+            }
+        }
+    }
+
+    private fun startPhaseReloadJob() {
+        phaseReloadJob?.cancel()
+        phaseReloadJob = scope.launch {
+            var last: MatchPhase? = null
+            while (isActive) {
+                val current = MatchPhaseController.phase.value
+                if (current != last) {
+                    last = current
+                    if (!stopping.get() && commandServer != null) reloadBlocking()
+                }
+                delay(500)
             }
         }
     }
@@ -215,7 +253,13 @@ class BlockerVpnService : VpnService() {
         BlockerRepository.log("Применение новых правил…")
         scope.launch {
             try {
-                val config = BlockerConfig.build(this@BlockerVpnService, sessionPort, sessionSecret)
+                val config = BlockerConfig.build(
+                    this@BlockerVpnService,
+                    sessionPort,
+                    sessionSecret,
+                    MatchPhaseController.phase.value,
+                    sessionDelayPort,
+                )
                 Libbox.checkConfig(config)
                 File(filesDir, "current-config.json").writeText(config)
                 server.startOrReloadService(config, OverrideOptions())
@@ -249,6 +293,12 @@ class BlockerVpnService : VpnService() {
         matchAlertManager = null
         connectionMonitor?.stop()
         connectionMonitor = null
+        phaseReloadJob?.cancel()
+        phaseReloadJob = null
+        delayShaper?.stop()
+        delayShaper = null
+        sessionDelayPort = 0
+        MatchPhaseController.reset()
         BlockerRepository.setStatus(BlockerStatus.Stopped)
 
         scope.launch {
@@ -307,6 +357,12 @@ class BlockerVpnService : VpnService() {
         matchAlertManager = null
         connectionMonitor?.stop()
         connectionMonitor = null
+        phaseReloadJob?.cancel()
+        phaseReloadJob = null
+        delayShaper?.stop()
+        delayShaper = null
+        sessionDelayPort = 0
+        MatchPhaseController.reset()
         runCatching { commandServer?.closeService() }
         runCatching { commandServer?.close() }
         commandServer = null
@@ -549,11 +605,19 @@ class BlockerVpnService : VpnService() {
             scope,
             { message -> BlockerRepository.log(message) },
             { ip, port, network, blocked ->
+                MatchPhaseController.onMatchFound()
                 if (!stopping.get()) {
                     matchAlertManager?.onMatch(ip, port, network, blocked)
                 }
             },
             { ip, port, network ->
+                when {
+                    GamePorts.isSafePort(port) || StartupEndpoints.isMainConnection(ip, port) ->
+                        MatchPhaseController.onLoginTraffic()
+
+                    GamePorts.isMatchPort(port) -> MatchPhaseController.onMatchTraffic()
+                    else -> MatchPhaseController.onAnyTraffic()
+                }
                 if (!stopping.get()) {
                     UnknownPortDetector.onConnection(this@BlockerVpnService, ip, port)
                     if (GamePorts.isMatchPort(port) || GamePorts.isSafePort(port)) {
@@ -568,6 +632,9 @@ class BlockerVpnService : VpnService() {
                     }
                 }
             },
+            debugTrace = { BlocklistStore(this@BlockerVpnService).debugTrace },
+            phaseProvider = { MatchPhaseController.phase.value },
+            policyProvider = { BlockerConfig.currentPolicy() },
         ).also { it.start() }
     }
 

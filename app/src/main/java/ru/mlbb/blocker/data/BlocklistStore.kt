@@ -150,6 +150,27 @@ class BlocklistStore(context: Context) {
             prefs.edit().putBoolean(KEY_LAST_RUNNING, value).apply()
         }
 
+    /** Режим фильтрации профиля: "block" — RST/отбрасывание, "delay" — задержка шейпером. */
+    var filterMode: String
+        get() = prefs.getString(KEY_FILTER_MODE, "block") ?: "block"
+        set(value) {
+            prefs.edit().putString(KEY_FILTER_MODE, value).apply()
+        }
+
+    /** Задержка шейпера, мс: 100–500, шаг 50. */
+    var delayMs: Int
+        get() = prefs.getInt(KEY_DELAY_MS, 250).coerceIn(100, 500)
+        set(value) {
+            prefs.edit().putInt(KEY_DELAY_MS, value.coerceIn(100, 500)).apply()
+        }
+
+    /** Debug trace: логирование контактов MLBB-трафика (Настройки → Для разработчиков). */
+    var debugTrace: Boolean
+        get() = prefs.getBoolean(KEY_DEBUG_TRACE, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_DEBUG_TRACE, value).apply()
+        }
+
     var discoveryUntil: Long
         get() = prefs.getLong(KEY_DISCOVERY_UNTIL, 0L)
         set(value) {
@@ -349,5 +370,8 @@ class BlocklistStore(context: Context) {
         private const val KEY_IGNORED_PORTS = "ignored_ports"
         private const val KEY_UNKNOWN_PORT_SEEN = "unknown_port_seen"
         private const val KEY_STABILIZATION_LEGACY = "ping_stabilization"
+        private const val KEY_FILTER_MODE = "filter_mode"
+        private const val KEY_DELAY_MS = "delay_ms"
+        private const val KEY_DEBUG_TRACE = "debug_trace"
     }
 }

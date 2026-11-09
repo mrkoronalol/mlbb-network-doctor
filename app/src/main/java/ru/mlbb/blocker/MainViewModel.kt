@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,8 +40,14 @@ import ru.mlbb.blocker.data.InstallResult
 import ru.mlbb.blocker.data.analytics.Analytics
 import ru.mlbb.blocker.data.analytics.PingTelemetry
 import ru.mlbb.blocker.data.AutoProfileAdvisor
+import ru.mlbb.blocker.data.MatchPhase
+import ru.mlbb.blocker.data.MatchPhaseController
 import ru.mlbb.blocker.data.PingCollector
 import ru.mlbb.blocker.data.PingReport
+import ru.mlbb.blocker.data.RegionIpRepository
+import ru.mlbb.blocker.data.ShaperStats
+import ru.mlbb.blocker.data.trace.DebugTrace
+import ru.mlbb.blocker.data.db.RegionIpEntity
 import ru.mlbb.blocker.data.MlbbPackageInfo
 import ru.mlbb.blocker.data.db.BlockedAttemptEntity
 import ru.mlbb.blocker.data.db.MatchSessionEntity
@@ -116,6 +123,14 @@ data class UiState(
     val featureMetaEnabled: Boolean = true,
     val updateRequired: Boolean = false,
     val minAppVersion: String = "",
+    val phase: MatchPhase = MatchPhase.IDLE,
+    val filterMode: String = "block",
+    val delayMs: Int = 250,
+    val shaperStats: ShaperStats = ShaperStats(),
+    val debugTrace: Boolean = false,
+    val hypothesisRunning: Boolean = false,
+    val hypothesisReport: String? = null,
+    val regionRanges: List<RegionIpEntity> = emptyList(),
 ) {
     val isBusy: Boolean get() = status is BlockerStatus.Starting
     val isRunning: Boolean get() = status is BlockerStatus.Running
@@ -156,11 +171,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             unknownPortAlerts = store.unknownPortAlerts,
             stableOnlyAlerts = store.stableOnlyAlerts,
             analyticsEnabled = Analytics.isEnabled(application),
+            filterMode = store.filterMode,
+            delayMs = store.delayMs,
+            debugTrace = store.debugTrace,
         ),
     )
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            MatchPhaseController.phase.collect { phase ->
+                _ui.update { it.copy(phase = phase) }
+            }
+        }
+        viewModelScope.launch {
+            BlockerRepository.shaperStats.collect { stats ->
+                _ui.update { it.copy(shaperStats = stats) }
+            }
+        }
+        viewModelScope.launch {
+            runCatching { RegionIpRepository.refresh(application) }
+            _ui.update { it.copy(regionRanges = RegionIpRepository.allCached()) }
+        }
         viewModelScope.launch {
             BlockerRepository.status.collect { status ->
                 _ui.update { it.copy(status = status) }
@@ -718,6 +750,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     Settings.canDrawOverlays(getApplication())
                 }.getOrDefault(false),
                 batteryOptimizationIgnored = batteryOptimizationIgnored(),
+                filterMode = store.filterMode,
+                delayMs = store.delayMs,
+                debugTrace = store.debugTrace,
             )
         }
     }
@@ -767,6 +802,57 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         store.allowStartupServer = enabled
         _ui.update { it.copy(allowStartupServer = enabled) }
         reloadIfRunning()
+    }
+
+    fun setFilterMode(mode: String) {
+        if (mode != "block" && mode != "delay") return
+        store.filterMode = mode
+        _ui.update { it.copy(filterMode = mode) }
+        reloadIfRunning()
+    }
+
+    fun setDelayMs(ms: Int) {
+        val clamped = ms.coerceIn(100, 500)
+        store.delayMs = clamped
+        _ui.update { it.copy(delayMs = clamped) }
+        reloadIfRunning()
+    }
+
+    fun setDebugTrace(enabled: Boolean) {
+        store.debugTrace = enabled
+        _ui.update { it.copy(debugTrace = enabled) }
+        if (!enabled) DebugTrace.clear()
+    }
+
+    /** Возвращает JSON лога для экспорта (без содержимого пакетов). */
+    fun exportTraceJson(): String = DebugTrace.exportJson()
+
+    fun runHypothesisCheck() {
+        if (_ui.value.hypothesisRunning) return
+        if (!isRunning()) {
+            _ui.update {
+                it.copy(
+                    hypothesisReport = getApplication<Application>()
+                        .getString(R.string.hypothesis_not_running),
+                )
+            }
+            return
+        }
+        _ui.update { it.copy(hypothesisRunning = true, hypothesisReport = null) }
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val started = System.currentTimeMillis()
+                while (System.currentTimeMillis() - started < 60_000) {
+                    delay(5_000)
+                }
+            }
+            val report = DebugTrace.analyseQueueProbes(DebugTrace.snapshot()) { ip ->
+                RegionIpRepository.allCached()
+                    .firstOrNull { Cidr.contains(it.cidr, ip) }
+                    ?.region
+            }
+            _ui.update { it.copy(hypothesisRunning = false, hypothesisReport = report.summary) }
+        }
     }
 
     fun finishOnboarding() {

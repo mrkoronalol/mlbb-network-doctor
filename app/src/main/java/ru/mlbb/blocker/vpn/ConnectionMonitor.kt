@@ -15,14 +15,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import ru.mlbb.blocker.data.BlockerPolicy
 import ru.mlbb.blocker.data.GamePorts
+import ru.mlbb.blocker.data.MatchPhase
+import ru.mlbb.blocker.data.RouteAction
+import ru.mlbb.blocker.data.RuleEngine
 import ru.mlbb.blocker.data.db.MonitorRepository
+import ru.mlbb.blocker.data.trace.DebugTrace
+import ru.mlbb.blocker.data.trace.TraceEntry
 
 class ConnectionMonitor(
     private val scope: CoroutineScope,
     private val log: (String) -> Unit,
     private val onMatch: ((String, Int, String, Boolean) -> Unit)? = null,
     private val onConnection: ((String, Int, String) -> Unit)? = null,
+    private val debugTrace: () -> Boolean = { false },
+    private val phaseProvider: () -> MatchPhase = { MatchPhase.IDLE },
+    private val policyProvider: () -> BlockerPolicy = { BlockerPolicy() },
 ) {
     private var client: CommandClient? = null
     private var connectJob: Job? = null
@@ -111,12 +120,17 @@ class ConnectionMonitor(
                         val network = connection.network?.takeIf { it.isNotBlank() } ?: "tcp"
                         val host = connection.domain?.takeIf { it.isNotBlank() }
                         val timestamp = normalizeTimestamp(connection.createdAt)
-                        val blocked = connection.outbound == "sink"
+                        val blocked = RuleEngine.decide(
+                            parsed.first,
+                            parsed.second,
+                            policyProvider(),
+                        ).action == RouteAction.SINK
                         if (blocked) {
-                            MonitorRepository.recordBlockedAttempt(parsed.first, parsed.second, network, "sink")
+                            MonitorRepository.recordBlockedAttempt(parsed.first, parsed.second, network, "reject")
                         } else {
                             MonitorRepository.record(parsed.first, parsed.second, network, host, timestamp)
                         }
+                        recordTrace(parsed.first, parsed.second, network, blocked, connection.fromOutbound)
                         if (GamePorts.isMatchPort(parsed.second)) {
                             onMatch?.invoke(parsed.first, parsed.second, network, blocked)
                         }
@@ -147,8 +161,29 @@ class ConnectionMonitor(
         }
     }
 
-    private fun parseDestination(destination: String): Pair<String, Int>? {
-        val value = destination.trim()
+    private fun recordTrace(ip: String, port: Int, network: String, blocked: Boolean, fromOutbound: String) {
+        if (!debugTrace()) return
+        val phase = phaseProvider().name
+        val category = when {
+            blocked -> "block"
+            fromOutbound == "delay-relay" -> "delay"
+            network == "udp" && phase == "QUEUE" -> "udp_probe"
+            network == "tcp" && phase == "QUEUE" -> "tcp_handshake"
+            else -> "contact"
+        }
+        DebugTrace.record(
+            TraceEntry(
+                ts = System.currentTimeMillis(),
+                phase = phase,
+                category = category,
+                ip = ip,
+                port = port,
+                network = network,
+            ),
+        )
+    }
+
+    private fun parseDestination(destination: String): Pair<String, Int>? {        val value = destination.trim()
         if (value.isEmpty()) return null
         if (value.startsWith("[")) {
             val end = value.indexOf(']')

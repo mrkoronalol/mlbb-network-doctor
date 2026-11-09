@@ -167,4 +167,24 @@
     <string name="settings_battery_hint">На realme/OPPO также включите автозапуск и «Разрешить фоновую активность»: иначе система может убить VPN во время игры.</string>
     <string name="settings_allow_login_title">Разрешать логин-пул</string>
     <string name="settings_allow_login_desc">154.85.91.151 и весь 154.85.91.0/24:10003. Без этого часть сессий не входит в игру; фильтр матч-серверов ослабляется.</string>
+    <string name="filter_mode_title">Режим фильтрации</string>
+    <string name="filter_mode_block">Блокировать</string>
+    <string name="filter_mode_delay">Задерживать</string>
+    <string name="delay_label">Задержка: %1$d мс</string>
+    <string name="dodge_warning">Задержка безопаснее для кредитного счёта, чем блокировка. Блокировка может привести к dodge-штрафу.</string>
+    <string name="phase_title">Фаза</string>
+    <string name="phase_idle">Ожидание</string>
+    <string name="phase_queue">Очередь</string>
+    <string name="phase_match_found">Матч найден</string>
+    <string name="phase_in_game">В игре</string>
+    <string name="dev_trace_title">Debug trace</string>
+    <string name="dev_trace_desc">Логировать контакты MLBB-трафика: IP:порт, фаза, протокол. Содержимое пакетов не сохраняется.</string>
+    <string name="dev_trace_export">Экспорт лога (JSON)</string>
+    <string name="dev_hypothesis">Проверить гипотезу</string>
+    <string name="hypothesis_running">Сбор 60 с…</string>
+    <string name="hypothesis_not_running">Сначала включите блокировку и начните поиск матча.</string>
+    <string name="trace_exported">Лог экспортирован</string>
+    <string name="trace_export_failed">Не удалось экспортировать лог</string>
+    <string name="region_ranges_title">Диапазоны регионов</string>
+    <string name="region_ranges_desc">Известные матч-серверы: ДВ не фильтруются, Новосибирск задерживается шейпером.</string>
 </resources>

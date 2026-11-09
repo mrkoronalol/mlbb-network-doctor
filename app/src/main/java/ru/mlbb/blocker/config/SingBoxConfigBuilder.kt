@@ -5,12 +5,26 @@ import org.json.JSONObject
 import ru.mlbb.blocker.BuildConfig
 import ru.mlbb.blocker.data.GamePorts
 
+/**
+ * Генератор конфигурации sing-box.
+ *
+ * Блокировка — route action `reject`:
+ * - `method: "default"` — TCP RST + ICMP unreachable для UDP (быстрый отказ),
+ * - `method: "drop"` — молчаливое отбрасывание.
+ *
+ * Задержка — outbound `socks` на локальный [DelayShaper] (127.0.0.1),
+ * применяется только к UDP-трафику нежелательных регионов. Логин-пул и
+ * сервисные порты идут раньше в правилах и в релей не попадают.
+ */
 object SingBoxConfigBuilder {
 
     const val MLBB_PACKAGE = "com.mobile.legends"
     const val MLBB_PACKAGE_XIAOMI = "com.mobilelegends.mi"
     val MLBB_PACKAGES = listOf(MLBB_PACKAGE, MLBB_PACKAGE_XIAOMI)
     const val TEST_PACKAGE = "com.android.shell"
+
+    const val REJECT_RESET = "default"
+    const val REJECT_DROP = "drop"
 
     fun build(
         rules: List<String>,
@@ -23,9 +37,13 @@ object SingBoxConfigBuilder {
         clashPort: Int,
         clashSecret: String,
         mtu: Int = 1400,
-        rejectMethod: String = "drop",
+        rejectMethod: String = REJECT_RESET,
         logOutput: String? = null,
         logLevel: String = "info",
+        blocksEnabled: Boolean = true,
+        delayEnabled: Boolean = true,
+        delayCidrs: List<String> = emptyList(),
+        delayRelayPort: Int = 0,
     ): String {
         val includedPackages = MLBB_PACKAGES + if (BuildConfig.DEBUG) listOf(TEST_PACKAGE) else emptyList()
         val root = JSONObject()
@@ -63,23 +81,28 @@ object SingBoxConfigBuilder {
             .put("include_package", JSONArray().also { array -> includedPackages.forEach(array::put) })
 
         root.put("inbounds", JSONArray().put(tun))
-        root.put(
-            "outbounds",
-            JSONArray()
-                .put(
-                    JSONObject()
-                        .put("type", "direct")
-                        .put("tag", "direct"),
-                )
-                .put(
-                    JSONObject()
-                        .put("type", "socks")
-                        .put("tag", "sink")
-                        .put("server", "127.0.0.1")
-                        .put("server_port", 9)
-                        .put("version", "5"),
-                ),
-        )
+
+        val outbounds = JSONArray()
+            .put(
+                JSONObject()
+                    .put("type", "direct")
+                    .put("tag", "direct"),
+            )
+        if (delayEnabled && delayRelayPort > 0 && delayCidrs.isNotEmpty()) {
+            outbounds.put(
+                JSONObject()
+                    .put("type", "socks")
+                    .put("tag", "delay-relay")
+                    .put("server", "127.0.0.1")
+                    .put("server_port", delayRelayPort)
+                    .put("version", "5"),
+            )
+        }
+        root.put("outbounds", outbounds)
+
+        fun rejectRule(): JSONObject = JSONObject()
+            .put("action", "reject")
+            .put("method", rejectMethod)
 
         val routeRules = JSONArray()
         routeRules.put(
@@ -102,15 +125,7 @@ object SingBoxConfigBuilder {
                 .put("action", "route")
                 .put("outbound", "direct"),
         )
-        if (!discoveryMode && rules.isNotEmpty()) {
-            routeRules.put(
-                JSONObject()
-                    .put("ip_cidr", JSONArray(rules))
-                    .put("action", "route")
-                    .put("outbound", "sink"),
-            )
-        }
-        if (!discoveryMode && loginRules.isNotEmpty() && loginPorts.isNotEmpty()) {
+        if (loginRules.isNotEmpty() && loginPorts.isNotEmpty()) {
             routeRules.put(
                 JSONObject()
                     .put("ip_cidr", JSONArray(loginRules))
@@ -119,45 +134,52 @@ object SingBoxConfigBuilder {
                     .put("outbound", "direct"),
             )
         }
-        if (!discoveryMode && profileRules.isNotEmpty()) {
+        if (delayEnabled && delayCidrs.isNotEmpty() && delayRelayPort > 0) {
+            routeRules.put(
+                JSONObject()
+                    .put("network", "udp")
+                    .put("ip_cidr", JSONArray(delayCidrs))
+                    .put("action", "route")
+                    .put("outbound", "delay-relay"),
+            )
+        }
+        if (!discoveryMode && blocksEnabled && rules.isNotEmpty()) {
+            routeRules.put(
+                rejectRule()
+                    .put("ip_cidr", JSONArray(rules)),
+            )
+        }
+        if (!discoveryMode && blocksEnabled && profileRules.isNotEmpty()) {
             val rangePorts = GamePorts.MATCH_PORT_RANGES
             val singlePorts = GamePorts.MATCH_PORT_LIST
             if (singlePorts.isNotEmpty()) {
                 routeRules.put(
-                    JSONObject()
+                    rejectRule()
                         .put("ip_cidr", JSONArray(profileRules))
-                        .put("port", JSONArray(singlePorts))
-                        .put("action", "route")
-                        .put("outbound", "sink"),
+                        .put("port", JSONArray(singlePorts)),
                 )
             }
             if (rangePorts.isNotEmpty()) {
                 routeRules.put(
-                    JSONObject()
+                    rejectRule()
                         .put("ip_cidr", JSONArray(profileRules))
-                        .put("port_range", JSONArray(rangePorts))
-                        .put("action", "route")
-                        .put("outbound", "sink"),
+                        .put("port_range", JSONArray(rangePorts)),
                 )
             }
         }
-        if (!discoveryMode && blockMatchPorts) {
+        if (!discoveryMode && blocksEnabled && blockMatchPorts) {
             val rangePorts = GamePorts.MATCH_PORT_RANGES
             val singlePorts = GamePorts.MATCH_PORT_LIST
             if (singlePorts.isNotEmpty()) {
                 routeRules.put(
-                    JSONObject()
-                        .put("port", JSONArray(singlePorts))
-                        .put("action", "route")
-                        .put("outbound", "sink"),
+                    rejectRule()
+                        .put("port", JSONArray(singlePorts)),
                 )
             }
             if (rangePorts.isNotEmpty()) {
                 routeRules.put(
-                    JSONObject()
-                        .put("port_range", JSONArray(rangePorts))
-                        .put("action", "route")
-                        .put("outbound", "sink"),
+                    rejectRule()
+                        .put("port_range", JSONArray(rangePorts)),
                 )
             }
         }

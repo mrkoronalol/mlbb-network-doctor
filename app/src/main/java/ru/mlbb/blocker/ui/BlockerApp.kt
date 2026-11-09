@@ -40,6 +40,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Slider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -84,10 +86,12 @@ import ru.mlbb.blocker.data.BlockPreset
 import ru.mlbb.blocker.data.BlockerStatus
 import ru.mlbb.blocker.data.ConnectionStat
 import ru.mlbb.blocker.data.HealthIssue
+import ru.mlbb.blocker.data.MatchPhase
 import ru.mlbb.blocker.data.RegionProfile
 import ru.mlbb.blocker.data.RegionProfiles
 import ru.mlbb.blocker.data.UpdateDownloadState
 import ru.mlbb.blocker.data.UpdateInfo
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,6 +141,11 @@ fun BlockerApp(
     onAnalyticsEnabledChange: (Boolean) -> Unit,
     onRunPingDiagnostics: () -> Unit,
     onRequestBatteryExemption: () -> Unit,
+    onFilterModeChange: (String) -> Unit,
+    onDelayMsChange: (Int) -> Unit,
+    onDebugTraceChange: (Boolean) -> Unit,
+    onExportTrace: () -> Unit,
+    onRunHypothesisCheck: () -> Unit,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
@@ -236,6 +245,8 @@ fun BlockerApp(
                         onInstallUpdate = onInstallUpdate,
                         onOpenAbout = { showAbout = true },
                         onHealthAction = onHealthAction,
+                        onFilterModeChange = onFilterModeChange,
+                        onDelayMsChange = onDelayMsChange,
                     )
                     AppTab.Match -> MatchScreen(
                         ui = ui,
@@ -291,6 +302,9 @@ fun BlockerApp(
                         onStableOnlyAlertsChange = onStableOnlyAlertsChange,
                         onAnalyticsEnabledChange = onAnalyticsEnabledChange,
                         onRequestBatteryExemption = onRequestBatteryExemption,
+                        onDebugTraceChange = onDebugTraceChange,
+                        onExportTrace = onExportTrace,
+                        onRunHypothesisCheck = onRunHypothesisCheck,
                     )
                 }
             }
@@ -432,6 +446,8 @@ private fun HomeScreen(
     onInstallUpdate: () -> Unit,
     onOpenAbout: () -> Unit,
     onHealthAction: () -> Unit,
+    onFilterModeChange: (String) -> Unit,
+    onDelayMsChange: (Int) -> Unit,
 ) {
     var infoProfile by remember { mutableStateOf<RegionProfile?>(null) }
     var noticeDismissed by rememberSaveable { mutableStateOf(false) }
@@ -591,6 +607,92 @@ private fun HomeScreen(
                 regionShort,
                 Modifier.weight(1f),
             )
+        }
+
+        EsportsCard {
+            Column(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    stringResource(R.string.filter_mode_title),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = ui.filterMode == "block",
+                        onClick = { onFilterModeChange("block") },
+                        label = {
+                            Text(
+                                stringResource(R.string.filter_mode_block),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        },
+                    )
+                    FilterChip(
+                        selected = ui.filterMode == "delay",
+                        onClick = { onFilterModeChange("delay") },
+                        label = {
+                            Text(
+                                stringResource(R.string.filter_mode_delay),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        },
+                    )
+                }
+                if (ui.filterMode == "delay") {
+                    Text(
+                        stringResource(R.string.delay_label, ui.delayMs),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Slider(
+                        value = ui.delayMs.toFloat(),
+                        onValueChange = { value ->
+                            onDelayMsChange((value / 50f).roundToInt() * 50)
+                        },
+                        valueRange = 100f..500f,
+                        steps = 7,
+                    )
+                }
+                Text(
+                    stringResource(R.string.dodge_warning),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = AppColors.Warning,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stringResource(R.string.phase_title),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    listOf(
+                        MatchPhase.IDLE to R.string.phase_idle,
+                        MatchPhase.QUEUE to R.string.phase_queue,
+                        MatchPhase.MATCH_FOUND to R.string.phase_match_found,
+                        MatchPhase.IN_GAME to R.string.phase_in_game,
+                    ).forEach { (phase, labelRes) ->
+                        Text(
+                            stringResource(labelRes),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (ui.phase == phase) FontWeight.Bold else null,
+                            color = if (ui.phase == phase) {
+                                AppColors.CyanLight
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            modifier = Modifier.padding(end = 8.dp),
+                        )
+                    }
+                }
+                Text(
+                    ui.shaperStats.summary,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
 
         EsportsCard {

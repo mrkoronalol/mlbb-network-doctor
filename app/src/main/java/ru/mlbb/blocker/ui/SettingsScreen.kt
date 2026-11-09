@@ -71,6 +71,9 @@ fun SettingsScreen(
     onStableOnlyAlertsChange: (Boolean) -> Unit,
     onAnalyticsEnabledChange: (Boolean) -> Unit,
     onRequestBatteryExemption: () -> Unit,
+    onDebugTraceChange: (Boolean) -> Unit,
+    onExportTrace: () -> Unit,
+    onRunHypothesisCheck: () -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(setOf("blocking")) }
     var showApiDialog by remember { mutableStateOf(false) }
@@ -246,6 +249,27 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Text(
+                stringResource(R.string.region_ranges_title),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (ui.regionRanges.isEmpty()) {
+                Text(
+                    stringResource(R.string.region_ranges_desc),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                ui.regionRanges.forEach { range ->
+                    Text(
+                        "${range.region} · ${range.cidr} — ${range.label}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "GeoIP: " + when (val status = ui.geoIpStatus) {
@@ -440,6 +464,44 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            CompactSwitchRow(
+                title = stringResource(R.string.dev_trace_title),
+                checked = ui.debugTrace,
+                onCheckedChange = onDebugTraceChange,
+            )
+            Text(
+                stringResource(R.string.dev_trace_desc),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onExportTrace) {
+                    Text(stringResource(R.string.dev_trace_export), style = MaterialTheme.typography.labelSmall)
+                }
+                TextButton(
+                    onClick = onRunHypothesisCheck,
+                    enabled = !ui.hypothesisRunning,
+                ) {
+                    Text(
+                        stringResource(
+                            if (ui.hypothesisRunning) R.string.hypothesis_running
+                            else R.string.dev_hypothesis,
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+            ui.hypothesisReport?.let { report ->
+                Text(
+                    report,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (report.contains("не подтверждается")) {
+                        AppColors.Warning
+                    } else {
+                        AppColors.Success
+                    },
+                )
+            }
         }
     }
 
