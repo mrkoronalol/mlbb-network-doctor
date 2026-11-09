@@ -187,4 +187,9 @@
     <string name="trace_export_failed">Не удалось экспортировать лог</string>
     <string name="region_ranges_title">Диапазоны регионов</string>
     <string name="region_ranges_desc">Известные матч-серверы: ДВ не фильтруются, Новосибирск задерживается шейпером.</string>
+    <string name="tun_stack_title">Стек TUN</string>
+    <string name="tun_stack_system">system (быстрее)</string>
+    <string name="tun_stack_gvisor">gvisor</string>
+    <string name="tun_stack_applied">Стек TUN применён — правила перезагружены</string>
+    <string name="tun_stack_hint">Если пинг в игре выше, чем на ПК, переключите на system: он меньше нагружает Wi-Fi.</string>
 </resources>

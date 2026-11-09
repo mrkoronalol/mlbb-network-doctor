@@ -146,6 +146,7 @@ class MainActivity : ComponentActivity() {
                     onFilterModeChange = viewModel::setFilterMode,
                     onDelayMsChange = viewModel::setDelayMs,
                     onDebugTraceChange = viewModel::setDebugTrace,
+                    onTunStackChange = viewModel::setTunStack,
                     onExportTrace = {
                         exportTraceLauncher.launch(
                             "mlbb-debug-trace-${System.currentTimeMillis()}.json",

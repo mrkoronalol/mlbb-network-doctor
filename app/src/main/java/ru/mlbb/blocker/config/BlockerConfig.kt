@@ -82,6 +82,7 @@ object BlockerConfig {
             delayEnabled = filter != PhaseFilter.BLOCKS_OFF,
             delayCidrs = delayCidrs,
             delayRelayPort = delayRelayPort,
+            tunStack = store.tunStack,
         )
     }
 

@@ -144,6 +144,7 @@ fun BlockerApp(
     onFilterModeChange: (String) -> Unit,
     onDelayMsChange: (Int) -> Unit,
     onDebugTraceChange: (Boolean) -> Unit,
+    onTunStackChange: (String) -> Unit,
     onExportTrace: () -> Unit,
     onRunHypothesisCheck: () -> Unit,
 ) {
@@ -303,6 +304,7 @@ fun BlockerApp(
                         onAnalyticsEnabledChange = onAnalyticsEnabledChange,
                         onRequestBatteryExemption = onRequestBatteryExemption,
                         onDebugTraceChange = onDebugTraceChange,
+                        onTunStackChange = onTunStackChange,
                         onExportTrace = onExportTrace,
                         onRunHypothesisCheck = onRunHypothesisCheck,
                     )
@@ -460,7 +462,7 @@ private fun HomeScreen(
             stringResource(R.string.region_custom)
         else -> selectedProfile.title
     }
-    val currentPing = ui.currentMatch?.pingMs?.let { "$it мс" } ?: "—"
+    val currentPing = ui.dashboardPingMs?.let { "$it мс" } ?: "—"
     val regionShort = if (selectedProfile?.id == RegionProfiles.ID_CUSTOM) {
         stringResource(R.string.region_custom_short)
     } else {

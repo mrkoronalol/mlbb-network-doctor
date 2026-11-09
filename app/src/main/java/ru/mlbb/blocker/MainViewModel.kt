@@ -33,6 +33,7 @@ import ru.mlbb.blocker.data.BlocklistStore
 import ru.mlbb.blocker.data.AllowRule
 import ru.mlbb.blocker.data.Cidr
 import ru.mlbb.blocker.data.ConnectionStat
+import ru.mlbb.blocker.data.DashboardPing
 import ru.mlbb.blocker.data.GamePorts
 import ru.mlbb.blocker.data.HealthIssue
 import ru.mlbb.blocker.data.BlockerHealth
@@ -124,10 +125,12 @@ data class UiState(
     val updateRequired: Boolean = false,
     val minAppVersion: String = "",
     val phase: MatchPhase = MatchPhase.IDLE,
+    val dashboardPingMs: Long? = null,
     val filterMode: String = "block",
     val delayMs: Int = 250,
     val shaperStats: ShaperStats = ShaperStats(),
     val debugTrace: Boolean = false,
+    val tunStack: String = "system",
     val hypothesisRunning: Boolean = false,
     val hypothesisReport: String? = null,
     val regionRanges: List<RegionIpEntity> = emptyList(),
@@ -174,6 +177,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             filterMode = store.filterMode,
             delayMs = store.delayMs,
             debugTrace = store.debugTrace,
+            tunStack = store.tunStack,
         ),
     )
     val ui: StateFlow<UiState> = _ui.asStateFlow()
@@ -205,7 +209,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val current = connections
                     .filter { GamePorts.isMatchPort(it.port) && now - it.lastSeen < 15_000 && it.observations > 0 }
                     .maxByOrNull { it.lastSeen }
-                _ui.update { it.copy(connections = connections, currentMatch = current) }
+                // «Пинг» на дашборде — только матч-порты: сервисные пробы выдают
+                // сотни мс к чужим регионам и раньше подменяли цифру.
+                val dashboardPing = DashboardPing.select(connections, now)
+                _ui.update {
+                    it.copy(
+                        connections = connections,
+                        currentMatch = current,
+                        dashboardPingMs = dashboardPing,
+                    )
+                }
             }
         }
         viewModelScope.launch {
@@ -818,6 +831,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         store.delayMs = clamped
         _ui.update { it.copy(delayMs = clamped) }
         reloadIfRunning()
+    }
+
+    fun setTunStack(stack: String) {
+        store.tunStack = stack
+        _ui.update { it.copy(tunStack = store.tunStack) }
+        reloadIfRunning()
+        showMessage(getApplication<Application>().getString(R.string.tun_stack_applied))
     }
 
     fun setDebugTrace(enabled: Boolean) {

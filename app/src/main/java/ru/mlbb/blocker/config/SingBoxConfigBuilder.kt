@@ -37,6 +37,7 @@ object SingBoxConfigBuilder {
         clashPort: Int,
         clashSecret: String,
         mtu: Int = 1400,
+        tunStack: String = "system",
         rejectMethod: String = REJECT_RESET,
         logOutput: String? = null,
         logLevel: String = "info",
@@ -77,7 +78,7 @@ object SingBoxConfigBuilder {
             .put("mtu", mtu)
             .put("auto_route", true)
             .put("strict_route", false)
-            .put("stack", "gvisor")
+            .put("stack", tunStack)
             .put("include_package", JSONArray().also { array -> includedPackages.forEach(array::put) })
 
         root.put("inbounds", JSONArray().put(tun))

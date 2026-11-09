@@ -171,6 +171,18 @@ class BlocklistStore(context: Context) {
             prefs.edit().putBoolean(KEY_DEBUG_TRACE, value).apply()
         }
 
+    /**
+     * Стек TUN: "system" (ядро, быстрее на TCP) или "gvisor" (пользовательский).
+     * Раньше был жёстко gvisor — на Wi-Fi с ретрансмиссиями это давало +100 мс.
+     */
+    var tunStack: String
+        get() = prefs.getString(KEY_TUN_STACK, "system")
+            ?.takeIf { it == "system" || it == "gvisor" } ?: "system"
+        set(value) {
+            val normalized = if (value == "gvisor") "gvisor" else "system"
+            prefs.edit().putString(KEY_TUN_STACK, normalized).apply()
+        }
+
     var discoveryUntil: Long
         get() = prefs.getLong(KEY_DISCOVERY_UNTIL, 0L)
         set(value) {
@@ -373,5 +385,6 @@ class BlocklistStore(context: Context) {
         private const val KEY_FILTER_MODE = "filter_mode"
         private const val KEY_DELAY_MS = "delay_ms"
         private const val KEY_DEBUG_TRACE = "debug_trace"
+        private const val KEY_TUN_STACK = "tun_stack"
     }
 }

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -72,6 +73,7 @@ fun SettingsScreen(
     onAnalyticsEnabledChange: (Boolean) -> Unit,
     onRequestBatteryExemption: () -> Unit,
     onDebugTraceChange: (Boolean) -> Unit,
+    onTunStackChange: (String) -> Unit,
     onExportTrace: () -> Unit,
     onRunHypothesisCheck: () -> Unit,
 ) {
@@ -461,6 +463,38 @@ fun SettingsScreen(
             }
             Text(
                 "Версия ${BuildConfig.VERSION_NAME}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                stringResource(R.string.tun_stack_title),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = ui.tunStack != "gvisor",
+                    onClick = { onTunStackChange("system") },
+                    label = {
+                        Text(
+                            stringResource(R.string.tun_stack_system),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    },
+                )
+                FilterChip(
+                    selected = ui.tunStack == "gvisor",
+                    onClick = { onTunStackChange("gvisor") },
+                    label = {
+                        Text(
+                            stringResource(R.string.tun_stack_gvisor),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    },
+                )
+            }
+            Text(
+                stringResource(R.string.tun_stack_hint),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
