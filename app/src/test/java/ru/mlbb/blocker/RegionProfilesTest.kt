@@ -42,7 +42,8 @@ class RegionProfilesTest {
             RegionProfiles.FAR_EAST.allowedCidrs,
         )
         val values = RegionProfiles.FAR_EAST.rules.map { it.first }.toSet()
-        assertTrue("154.85.91.0/24" in values)
+        // 154.85.91.0/24 — логин-пул: профиль ДВ его не блокирует, а пускает напрямую.
+        assertFalse("154.85.91.0/24" in values)
         assertTrue("146.185.199.0/24" in values)
         assertTrue("92.223.91.0/24" in values)
         assertTrue("148.153.82.0/24" in values)

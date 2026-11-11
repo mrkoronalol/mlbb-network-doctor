@@ -147,6 +147,7 @@ fun BlockerApp(
     onTunStackChange: (String) -> Unit,
     onLanguageChange: (String) -> Unit,
     onExportTrace: () -> Unit,
+    onExportLogFile: () -> Unit,
     onRunHypothesisCheck: () -> Unit,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
@@ -308,6 +309,7 @@ fun BlockerApp(
                         onTunStackChange = onTunStackChange,
                         onLanguageChange = onLanguageChange,
                         onExportTrace = onExportTrace,
+                        onExportLogFile = onExportLogFile,
                         onRunHypothesisCheck = onRunHypothesisCheck,
                     )
                 }

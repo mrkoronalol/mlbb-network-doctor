@@ -24,7 +24,8 @@ class PresetsTest {
     @Test
     fun nonFarEastPresetDoesNotBlockKhabarovskSubnet() {
         assertFalse(Presets.NON_FAR_EAST.rules.any { it.first.startsWith("92.223.80.") })
-        assertTrue(Presets.NON_FAR_EAST.rules.any { it.first == "154.85.91.0/24" })
+        // 154.85.91.0/24 — логин-пул, его разрешает отдельное правило, а не профиль.
+        assertFalse(Presets.NON_FAR_EAST.rules.any { it.first == "154.85.91.0/24" })
     }
 
     @Test

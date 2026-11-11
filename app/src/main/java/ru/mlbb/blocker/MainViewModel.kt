@@ -8,6 +8,7 @@ import android.net.Uri
 import android.net.VpnService
 import android.os.PowerManager
 import android.provider.Settings
+import java.io.File
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +55,7 @@ import ru.mlbb.blocker.data.MlbbPackageInfo
 import ru.mlbb.blocker.data.db.BlockedAttemptEntity
 import ru.mlbb.blocker.data.db.MatchSessionEntity
 import ru.mlbb.blocker.data.db.MonitorRepository
+import ru.mlbb.blocker.data.logs.FileLog
 import ru.mlbb.blocker.data.geo.GeoIpRepository
 import ru.mlbb.blocker.data.geo.GeoIpStatus
 import ru.mlbb.blocker.data.NetworkPing
@@ -842,6 +844,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         reloadIfRunning()
         showMessage(getApplication<Application>().getString(R.string.tun_stack_applied))
     }
+
+    /** Экспорт постоянного лога приложения (файл пишется всегда). */
+    fun exportLogFile(): File? = FileLog.shareableFile()
+
+    fun logFileTail(): String = FileLog.readTail()
+
+    fun debugTraceEnabled(): Boolean = store.debugTrace
 
     fun setDebugTrace(enabled: Boolean) {
         store.debugTrace = enabled

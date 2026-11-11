@@ -192,4 +192,8 @@
     <string name="region_select">Region</string>
     <string name="match_screen_subtitle">Check readiness and open the game.</string>
     <string name="match_screen_title">Before the match</string>
+    <string name="dev_log_title">Application log</string>
+    <string name="dev_log_desc">Always written: launch, login, connections, blocks, errors. doctor.log in app storage, rotated at 2 MB.</string>
+    <string name="dev_log_export">Save log</string>
+    <string name="dev_log_exported">Log saved</string>
 </resources>

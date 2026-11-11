@@ -21,9 +21,9 @@ import ru.mlbb.blocker.data.MatchPhase
 import ru.mlbb.blocker.data.RouteAction
 import ru.mlbb.blocker.data.RuleEngine
 import ru.mlbb.blocker.data.db.MonitorRepository
+import ru.mlbb.blocker.data.logs.FileLog
 import ru.mlbb.blocker.data.trace.DebugTrace
 import ru.mlbb.blocker.data.trace.TraceEntry
-
 class ConnectionMonitor(
     private val scope: CoroutineScope,
     private val log: (String) -> Unit,
@@ -162,6 +162,11 @@ class ConnectionMonitor(
     }
 
     private fun recordTrace(ip: String, port: Int, network: String, blocked: Boolean, fromOutbound: String) {
+        // Постоянный лог: каждое соединение MLBB пишется в файл всегда.
+        FileLog.write(
+            tag = if (blocked) "block" else "conn",
+            message = "$network $ip:$port ${if (fromOutbound.isBlank()) "" else "out=$fromOutbound "}phase=${phaseProvider().name}",
+        )
         if (!debugTrace()) return
         val phase = phaseProvider().name
         val category = when {

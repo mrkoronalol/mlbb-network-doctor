@@ -46,6 +46,7 @@ import ru.mlbb.blocker.data.UnknownPortDetector
 import ru.mlbb.blocker.data.analytics.Analytics
 import ru.mlbb.blocker.data.geo.GeoIpRepository
 import ru.mlbb.blocker.data.db.MonitorRepository
+import ru.mlbb.blocker.data.logs.FileLog
 import java.io.File
 import java.net.InetAddress
 import java.util.concurrent.atomic.AtomicBoolean
@@ -319,6 +320,7 @@ class BlockerVpnService : VpnService() {
 
     private fun fail(t: Throwable) {
         val message = t.message ?: t.javaClass.simpleName
+        FileLog.error("Ошибка запуска VPN: $message\n${t.stackTraceToString().take(4000)}")
         cleanupAfterFailure()
         val attempt = startAttempts.incrementAndGet()
         if (!stopping.get() && attempt <= MAX_START_ATTEMPTS) {

@@ -80,6 +80,7 @@ fun SettingsScreen(
     onTunStackChange: (String) -> Unit,
     onLanguageChange: (String) -> Unit,
     onExportTrace: () -> Unit,
+    onExportLogFile: () -> Unit,
     onRunHypothesisCheck: () -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(setOf("blocking")) }
@@ -541,6 +542,19 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Text(
+                stringResource(R.string.dev_log_title),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                stringResource(R.string.dev_log_desc),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            TextButton(onClick = onExportLogFile) {
+                Text(stringResource(R.string.dev_log_export), style = MaterialTheme.typography.labelSmall)
+            }
             CompactSwitchRow(
                 title = stringResource(R.string.dev_trace_title),
                 checked = ui.debugTrace,

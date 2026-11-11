@@ -177,6 +177,10 @@
     <string name="phase_queue">Очередь</string>
     <string name="phase_match_found">Матч найден</string>
     <string name="phase_in_game">В игре</string>
+    <string name="dev_log_title">Журнал приложения</string>
+    <string name="dev_log_desc">Пишется всегда: запуск, вход, соединения, блокировки, ошибки. Файл doctor.log во внутренней памяти, ротация по 2 МБ.</string>
+    <string name="dev_log_export">Сохранить журнал</string>
+    <string name="dev_log_exported">Журнал сохранён</string>
     <string name="dev_trace_title">Debug trace</string>
     <string name="dev_trace_desc">Логировать контакты MLBB-трафика: IP:порт, фаза, протокол. Содержимое пакетов не сохраняется.</string>
     <string name="dev_trace_export">Экспорт лога (JSON)</string>

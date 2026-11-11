@@ -1,6 +1,7 @@
 package ru.mlbb.blocker.data
 
 import ru.mlbb.blocker.BuildConfig
+import ru.mlbb.blocker.data.logs.FileLog
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +47,8 @@ object BlockerRepository {
         val line = "${timeFormat.format(Date())}  $message"
         if (BuildConfig.DEBUG) android.util.Log.d("MLBBBlocker", message)
         _logs.update { current -> (current + line).takeLast(300) }
+        // Постоянный файл: пишем всегда, независимо от переключателя Debug trace.
+        FileLog.info(message)
     }
 
     @Synchronized

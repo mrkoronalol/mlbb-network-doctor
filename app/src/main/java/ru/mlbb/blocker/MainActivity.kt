@@ -80,6 +80,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val exportLogLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("text/plain"),
+    ) { uri ->
+        if (uri != null) {
+            writeText(uri, viewModel.logFileTail(), getString(R.string.dev_log_exported))
+        }
+    }
+
     override fun attachBaseContext(newBase: android.content.Context) {
         super.attachBaseContext(ru.mlbb.blocker.data.LanguageWrapper.wrap(newBase))
     }
@@ -164,6 +172,11 @@ class MainActivity : ComponentActivity() {
                         )
                     },
                     onRunHypothesisCheck = viewModel::runHypothesisCheck,
+                    onExportLogFile = {
+                        exportLogLauncher.launch(
+                            "doctor-${System.currentTimeMillis()}.log",
+                        )
+                    },
                 )
             }
         }

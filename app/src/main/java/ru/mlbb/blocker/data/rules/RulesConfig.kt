@@ -74,6 +74,16 @@ object BuiltInRules {
         "5.188.3.0/24" to "Хабаровск, матч-сервер 5.188.3.161",
     )
 
+    /** Служебные пулы логина/матчмейкинга: никогда не блокируются и не задерживаются. */
+    val LOGIN_SERVICE_POOLS = listOf(
+        "154.85.91.0/24",
+        "161.202.0.0/16",
+        "23.90.132.0/24",
+        "129.227.0.0/16",
+        "169.55.0.0/16",
+        "158.177.0.0/16",
+    )
+
     val OTHER_REGIONS = listOf(
         "92.223.91.0/24" to "Екатеринбург",
         "146.185.197.0/24" to "Ростов-на-Дону",
@@ -100,7 +110,8 @@ object BuiltInRules {
         title = "ДВ",
         badge = "ДВ",
         description = "Только ДВ: Хабаровск и Владивосток. Остальные матч-серверы блокируются; логин и служебный трафик работают.",
-        rules = MOSCOW_SERVERS + NOVOSIBIRSK_SERVERS + OTHER_REGIONS,
+        rules = MOSCOW_SERVERS.filterNot { it.first == "154.85.91.0/24" } +
+            NOVOSIBIRSK_SERVERS + OTHER_REGIONS,
         allowedCidrs = FAR_EAST_SERVERS.map { it.first },
         blockOtherMatchServers = true,
     )
@@ -148,7 +159,9 @@ object BuiltInRules {
         matchPorts = listOf(10003),
         matchPortRanges = listOf("5000:5058", "5500:5599", "10011:10013", "10063:10063"),
         safePorts = listOf(30021, 30071, 30190, 30220),
-        startup = listOf(StartupEndpoint("154.85.91.151", 10003, "Основной сервер")),
+        startup = listOf(
+            StartupEndpoint("154.85.91.151", 10003, "Основной сервер"),
+        ),
         profiles = PROFILES,
         knownExact = KNOWN_EXACT,
         knownSubnets = KNOWN_SUBNETS,

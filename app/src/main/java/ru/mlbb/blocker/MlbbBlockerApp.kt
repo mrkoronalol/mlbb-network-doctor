@@ -18,6 +18,7 @@ import ru.mlbb.blocker.data.UpdateWorker
 import ru.mlbb.blocker.data.analytics.Analytics
 import ru.mlbb.blocker.data.analytics.TelemetryWorker
 import ru.mlbb.blocker.data.db.MonitorRepository
+import ru.mlbb.blocker.data.logs.FileLog
 import ru.mlbb.blocker.data.geo.GeoIpRepository
 import ru.mlbb.blocker.data.RegionProfiles
 import ru.mlbb.blocker.data.remote.ConfigSyncWorker
@@ -33,6 +34,8 @@ class MlbbBlockerApp : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        FileLog.initialize(this)
+        FileLog.info("Приложение запущено, версия ${BuildConfig.VERSION_NAME}")
         MonitorRepository.initialize(this)
         GeoIpRepository.initialize(this)
         RuleConfigRepository.initialize(this)

@@ -45,6 +45,7 @@ object SingBoxConfigBuilder {
         delayEnabled: Boolean = true,
         delayCidrs: List<String> = emptyList(),
         delayRelayPort: Int = 0,
+        delayLoginPool: Boolean = false,
     ): String {
         val includedPackages = MLBB_PACKAGES + if (BuildConfig.DEBUG) listOf(TEST_PACKAGE) else emptyList()
         val root = JSONObject()
@@ -89,7 +90,7 @@ object SingBoxConfigBuilder {
                     .put("type", "direct")
                     .put("tag", "direct"),
             )
-        if (delayEnabled && delayRelayPort > 0 && delayCidrs.isNotEmpty()) {
+        if (delayEnabled && delayRelayPort > 0 && (delayCidrs.isNotEmpty() || delayLoginPool)) {
             outbounds.put(
                 JSONObject()
                     .put("type", "socks")
@@ -132,7 +133,7 @@ object SingBoxConfigBuilder {
                     .put("ip_cidr", JSONArray(loginRules))
                     .put("port", JSONArray(loginPorts))
                     .put("action", "route")
-                    .put("outbound", "direct"),
+                    .put("outbound", if (delayLoginPool) "delay-relay" else "direct"),
             )
         }
         if (delayEnabled && delayCidrs.isNotEmpty() && delayRelayPort > 0) {

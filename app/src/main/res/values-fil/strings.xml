@@ -192,4 +192,8 @@
     <string name="region_select">Rehiyon</string>
     <string name="match_screen_subtitle">Tingnan ang readiness at buksan ang laro.</string>
     <string name="match_screen_title">Bago ang laban</string>
+    <string name="dev_log_title">Log ng app</string>
+    <string name="dev_log_desc">Laging nakasulat: paglunsad, login, koneksyon, pagharang, errors. doctor.log sa storage ng app, rotation sa 2 MB.</string>
+    <string name="dev_log_export">I-save ang log</string>
+    <string name="dev_log_exported">Nai-save ang log</string>
 </resources>

@@ -192,4 +192,8 @@
     <string name="region_select">Wilayah</string>
     <string name="match_screen_subtitle">Periksa kesiapan dan buka game.</string>
     <string name="match_screen_title">Sebelum laga</string>
+    <string name="dev_log_title">Log aplikasi</string>
+    <string name="dev_log_desc">Selalu ditulis: peluncuran, login, koneksi, blokir, galat. doctor.log di penyimpanan aplikasi, rotasi 2 MB.</string>
+    <string name="dev_log_export">Simpan log</string>
+    <string name="dev_log_exported">Log disimpan</string>
 </resources>

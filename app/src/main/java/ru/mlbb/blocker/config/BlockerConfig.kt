@@ -9,6 +9,7 @@ import ru.mlbb.blocker.data.PhaseFilter
 import ru.mlbb.blocker.data.RegionIpRepository
 import ru.mlbb.blocker.data.RegionProfiles
 import ru.mlbb.blocker.data.StartupEndpoints
+import ru.mlbb.blocker.data.rules.BuiltInRules
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.security.SecureRandom
@@ -32,10 +33,20 @@ object BlockerConfig {
         val profile = store.selectedProfile?.let(RegionProfiles::byId)
         val profileRules = profile?.rules?.map { it.first }.orEmpty()
         val rules = store.activeValues().distinct()
+        val loginPools = if (store.allowStartupServer) {
+            StartupEndpoints.LOGIN_POOL_CIDRS + BuiltInRules.LOGIN_SERVICE_POOLS
+        } else {
+            StartupEndpoints.LOGIN_POOL_CIDRS
+        }
+        val startupRules: List<String> =
+            if (store.allowStartupServer) StartupEndpoints.CIDRS else emptyList()
         val allowRules = (
             store.activeAllowValues() +
                 profile?.allowedCidrs.orEmpty() +
-                if (store.allowStartupServer) StartupEndpoints.CIDRS else emptyList()
+                startupRules +
+                // Служебные пулы входа и матчмейкинга всегда direct: иначе игра
+                // застревает на «Загрузка игры…», когда профиль режет Москву.
+                loginPools
             ).distinct()
         val loginRules = if (store.allowStartupServer) {
             StartupEndpoints.LOGIN_POOL_CIDRS
@@ -50,6 +61,9 @@ object BlockerConfig {
             store.filterMode == "delay" &&
             delayRelayPort > 0
         val delayCidrs = if (delayActive) RegionIpRepository.delayTargetCidrs() else emptyList()
+        // В режиме задержки логин-пул тоже слегка задерживается: тогда матчмейкер
+        // видит дальние регионы (Москва/Ekb/Ростов) медленнее и чаще выбирает ближний.
+        val delayLoginPool = delayActive && loginRules.isNotEmpty()
 
         currentPolicy = BlockerPolicy(
             allowCidrs = allowRules,
@@ -81,6 +95,7 @@ object BlockerConfig {
             blocksEnabled = blocksEnabled,
             delayEnabled = filter != PhaseFilter.BLOCKS_OFF,
             delayCidrs = delayCidrs,
+            delayLoginPool = delayLoginPool,
             delayRelayPort = delayRelayPort,
             tunStack = store.tunStack,
         )

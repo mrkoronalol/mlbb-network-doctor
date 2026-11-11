@@ -20,8 +20,8 @@ android {
         applicationId = "ru.mlbb.blocker"
         minSdk = 24
         targetSdk = 35
-        versionCode = 34
-        versionName = "0.22.0"
+        versionCode = 37
+        versionName = "0.22.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
