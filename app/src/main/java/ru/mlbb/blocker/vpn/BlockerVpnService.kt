@@ -80,6 +80,9 @@ class BlockerVpnService : VpnService() {
     private var sessionSecret: String = ""
     private var sessionDelayPort: Int = 0
     private var lastRuleCount: Int = 0
+    private var lastAppliedConfig: String? = null
+    private val reloadRequested = AtomicBoolean(false)
+    private val reloading = AtomicBoolean(false)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -202,12 +205,19 @@ class BlockerVpnService : VpnService() {
                 }
                 server.startOrReloadService(config, OverrideOptions())
                 if (stopping.get()) return@launch
+                lastAppliedConfig = config
 
                 BlockerRepository.setStatus(BlockerStatus.Running)
                 updateNotification(lastRuleCount)
                 startAttempts.set(0)
                 VpnNotifier.cancel(this@BlockerVpnService)
                 BlockerRepository.log("Блокировка запущена. Правил: $lastRuleCount, режим обнаружения: ${BlocklistStore(this@BlockerVpnService).discoveryMode}")
+                val startStore = BlocklistStore(this@BlockerVpnService)
+                FileLog.info(
+                    "tun up: rules=$lastRuleCount profile=${startStore.selectedProfile ?: "none"} " +
+                        "stack=${startStore.tunStack} mode=${startStore.filterMode} discovery=${startStore.discoveryMode} " +
+                        "phase=${MatchPhaseController.phase.value.name}",
+                )
                 Analytics.track(
                     "vpn_enabled",
                     mapOf(
@@ -251,29 +261,53 @@ class BlockerVpnService : VpnService() {
 
     private fun reloadBlocking() {
         val server = commandServer ?: return
-        BlockerRepository.log("Применение новых правил…")
+        if (!reloading.compareAndSet(false, true)) {
+            // Reload already running - remember that one more is needed.
+            reloadRequested.set(true)
+            return
+        }
         scope.launch {
             try {
-                val config = BlockerConfig.build(
-                    this@BlockerVpnService,
-                    sessionPort,
-                    sessionSecret,
-                    MatchPhaseController.phase.value,
-                    sessionDelayPort,
-                )
-                Libbox.checkConfig(config)
-                File(filesDir, "current-config.json").writeText(config)
-                server.startOrReloadService(config, OverrideOptions())
-                lastRuleCount = BlocklistStore(this@BlockerVpnService).loadRules().count { it.enabled }
-                updateNotification(lastRuleCount)
-                BlockerRepository.setStatus(BlockerStatus.Running)
-                scheduleDiscoveryEnd()
-                scheduleAllowExpiry()
-                BlockerRepository.log("Правила обновлены. Активных правил: $lastRuleCount")
+                do {
+                    reloadRequested.set(false)
+                    if (stopping.get()) return@launch
+                    val config = BlockerConfig.build(
+                        this@BlockerVpnService,
+                        sessionPort,
+                        sessionSecret,
+                        MatchPhaseController.phase.value,
+                        sessionDelayPort,
+                    )
+                    if (config == lastAppliedConfig) {
+                        // Config is byte-identical (e.g. IDLE->QUEUE: the filter is
+                        // ACTIVE in both phases). Restarting TUN would kill the login
+                        // in progress, so skip the core restart.
+                        FileLog.info(
+                            "reload skipped (config unchanged), phase=${MatchPhaseController.phase.value.name}",
+                        )
+                        continue
+                    }
+                    Libbox.checkConfig(config)
+                    File(filesDir, "current-config.json").writeText(config)
+                    server.startOrReloadService(config, OverrideOptions())
+                    lastAppliedConfig = config
+                    lastRuleCount = BlocklistStore(this@BlockerVpnService).loadRules().count { it.enabled }
+                    updateNotification(lastRuleCount)
+                    BlockerRepository.setStatus(BlockerStatus.Running)
+                    scheduleDiscoveryEnd()
+                    scheduleAllowExpiry()
+                    FileLog.info(
+                        "reload applied: rules=$lastRuleCount phase=${MatchPhaseController.phase.value.name}",
+                    )
+                    BlockerRepository.log("Правила обновлены. Активных правил: $lastRuleCount")
+                } while (reloadRequested.get() && !stopping.get())
             } catch (t: Throwable) {
                 val message = t.message ?: t.javaClass.simpleName
+                FileLog.error("reload failed: $message")
                 BlockerRepository.log("Не удалось обновить правила: $message")
                 BlockerRepository.setStatus(BlockerStatus.Error(message))
+            } finally {
+                reloading.set(false)
             }
         }
     }

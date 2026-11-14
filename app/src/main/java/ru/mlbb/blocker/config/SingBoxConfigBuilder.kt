@@ -46,6 +46,7 @@ object SingBoxConfigBuilder {
         delayCidrs: List<String> = emptyList(),
         delayRelayPort: Int = 0,
         delayLoginPool: Boolean = false,
+        safePoolCidrs: List<String> = emptyList(),
     ): String {
         val includedPackages = MLBB_PACKAGES + if (BuildConfig.DEBUG) listOf(TEST_PACKAGE) else emptyList()
         val root = JSONObject()
@@ -121,6 +122,20 @@ object SingBoxConfigBuilder {
                     .put("outbound", "direct"),
             )
         }
+        // Explicit login-infra bypass: known login pools x service ports.
+        // ip_cidr + port is more robust than a port-only rule: in sing-box 1.14
+        // a rule with only a port may be treated as empty during config check.
+        if (safePoolCidrs.isNotEmpty()) {
+            routeRules.put(
+                JSONObject()
+                    .put("ip_cidr", JSONArray(safePoolCidrs))
+                    .put("port", JSONArray(GamePorts.SAFE_PORT_LIST))
+                    .put("action", "route")
+                    .put("outbound", "direct"),
+            )
+        }
+        // Fallback: login pool may be wider than hardcoded lists, these ports
+        // are never touched for anyone.
         routeRules.put(
             JSONObject()
                 .put("port", JSONArray(GamePorts.SAFE_PORT_LIST))

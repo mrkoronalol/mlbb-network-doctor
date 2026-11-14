@@ -33,11 +33,11 @@ object BlockerConfig {
         val profile = store.selectedProfile?.let(RegionProfiles::byId)
         val profileRules = profile?.rules?.map { it.first }.orEmpty()
         val rules = store.activeValues().distinct()
-        val loginPools = if (store.allowStartupServer) {
-            StartupEndpoints.LOGIN_POOL_CIDRS + BuiltInRules.LOGIN_SERVICE_POOLS
-        } else {
-            StartupEndpoints.LOGIN_POOL_CIDRS
-        }
+        // Login pools and service login pools are ALWAYS direct, regardless of
+        // the "allow startup server" toggle: otherwise with the toggle off the
+        // login (Singapore 161.202.0.0/16 etc.) is protected only by the
+        // port-only safePorts rule which may not work in sing-box 1.14.
+        val loginPools = StartupEndpoints.LOGIN_POOL_CIDRS + BuiltInRules.LOGIN_SERVICE_POOLS
         val startupRules: List<String> =
             if (store.allowStartupServer) StartupEndpoints.CIDRS else emptyList()
         val allowRules = (
@@ -97,6 +97,7 @@ object BlockerConfig {
             delayCidrs = delayCidrs,
             delayLoginPool = delayLoginPool,
             delayRelayPort = delayRelayPort,
+            safePoolCidrs = loginPools,
             tunStack = store.tunStack,
         )
     }

@@ -22,6 +22,7 @@ class SingBoxConfigBuilderTest {
         delayEnabled: Boolean = true,
         delayCidrs: List<String> = emptyList(),
         delayRelayPort: Int = 0,
+        safePoolCidrs: List<String> = emptyList(),
     ): JSONObject = JSONObject(
         SingBoxConfigBuilder.build(
             rules = rules,
@@ -38,6 +39,7 @@ class SingBoxConfigBuilderTest {
             delayEnabled = delayEnabled,
             delayCidrs = delayCidrs,
             delayRelayPort = delayRelayPort,
+            safePoolCidrs = safePoolCidrs,
         ),
     )
 
@@ -163,6 +165,36 @@ class SingBoxConfigBuilderTest {
         }
         assertEquals(1, withPort)
         assertEquals(1, withRange)
+    }
+
+    @Test
+    fun safePoolCidrsWithPortsComesBeforeAnyReject() {
+        val config = build(
+            rules = listOf("146.185.199.0/24"),
+            blockMatchPorts = true,
+            safePoolCidrs = listOf("161.202.0.0/16", "154.85.91.0/24"),
+        )
+        val rules = config.getJSONObject("route").getJSONArray("rules")
+        var poolIndex = -1
+        var firstRejectIndex = -1
+        for (index in 0 until rules.length()) {
+            val rule = rules.getJSONObject(index)
+            val cidrs = rule.optJSONArray("ip_cidr")?.toString().orEmpty()
+            if (rule.optString("action") == "route" && rule.has("ip_cidr") && rule.has("port") &&
+                "161.202.0.0/16" in cidrs && poolIndex < 0
+            ) {
+                poolIndex = index
+            }
+            if (rule.optString("action") == "reject" && firstRejectIndex < 0) {
+                firstRejectIndex = index
+            }
+        }
+        assertTrue(poolIndex >= 0)
+        assertTrue("safe pools must be routed direct before rejects", poolIndex < firstRejectIndex)
+        val ports = (0 until rules.getJSONObject(poolIndex).getJSONArray("port").length())
+            .map { rules.getJSONObject(poolIndex).getJSONArray("port").getInt(it) }
+        assertTrue(30021 in ports)
+        assertTrue(30071 in ports)
     }
 
     @Test
