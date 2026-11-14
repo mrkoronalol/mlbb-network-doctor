@@ -111,7 +111,8 @@ class ConnectionMonitor(
                     val iterator = events.iterator()
                     while (iterator.hasNext()) {
                         val event = iterator.next()
-                        if (event.type.toLong() != Libbox.ConnectionEventNew) continue
+                        val type = event.type.toLong()
+                        if (type != Libbox.ConnectionEventNew && type != Libbox.ConnectionEventUpdate) continue
                         val connection = event.connection ?: continue
                         val destination = connection.destination
                             ?: connection.displayDestination()
@@ -120,12 +121,14 @@ class ConnectionMonitor(
                         val network = connection.network?.takeIf { it.isNotBlank() } ?: "tcp"
                         val host = connection.domain?.takeIf { it.isNotBlank() }
                         val timestamp = normalizeTimestamp(connection.createdAt)
-                        val blocked = RuleEngine.decide(
+                        val decision = RuleEngine.decide(
                             parsed.first,
                             parsed.second,
                             policyProvider(),
-                        ).action == RouteAction.SINK
+                        )
+                        val blocked = decision.action == RouteAction.SINK
                         if (blocked) {
+                            FileLog.write("block", "rule=${decision.matchedRule ?: decision.reason} $parsed")
                             MonitorRepository.recordBlockedAttempt(parsed.first, parsed.second, network, "reject")
                         } else {
                             MonitorRepository.record(parsed.first, parsed.second, network, host, timestamp)
@@ -164,8 +167,9 @@ class ConnectionMonitor(
     private fun recordTrace(ip: String, port: Int, network: String, blocked: Boolean, fromOutbound: String) {
         // Постоянный лог: каждое соединение MLBB пишется в файл всегда.
         FileLog.write(
-            tag = if (blocked) "block" else "conn",
-            message = "$network $ip:$port ${if (fromOutbound.isBlank()) "" else "out=$fromOutbound "}phase=${phaseProvider().name}",
+            tag = "conn",
+            message = "$network $ip:$port out=${fromOutbound.ifBlank { "?" }} " +
+                "phase=${phaseProvider().name} ${if (blocked) "BLOCKED" else "ok"}",
         )
         if (!debugTrace()) return
         val phase = phaseProvider().name

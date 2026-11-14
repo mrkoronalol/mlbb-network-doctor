@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.22.5 — логин при включённом VPN: без рестарта TUN посреди входа
+
+- **Причина «не работает вход при включённом VPN»**: `filterFor(IDLE) ==
+  filterFor(QUEUE) == ACTIVE`, то есть конфиг sing-box в обеих фазах
+  байт-в-байт одинаковый, но `startPhaseReloadJob` перезапускал ядро при
+  **любой** смене фазы. Первый логин-пакет по сервисному порту переводит
+  `IDLE → QUEUE` → рестарт TUN ровно во время логин-рукопожатия. В захватах
+  SYN к `30021/30071` и `154.85.91.151:30021` висели в `SYN_SENT` по 10–25 с
+  с ретрансмитами и без RST/SYN-ACK.
+- `reloadBlocking()` больше **не перезапускает ядро, если конфиг не изменился**,
+  и **сериализует** параллельные релоады. Фильтрация матчей не меняется:
+  `MATCH_FOUND` и `IN_GAME` по-прежнему применяют новый конфиг.
+- Логин-пулы и служебные пулы входа **всегда** в allow-листе, независимо от
+  тумблера «Служебный сервер входа».
+- Новое правило `ip_cidr × сервисные порты` (прямой `direct`) идёт до всех
+  reject-правил; порт-only правило осталось фолбэком (`BypassRules`).
+- `doctor.log`: `tun up: …`, `reload applied/skipped/failed` — видно, был ли
+  рестарт TUN во время логина.
+- Профиль «ДВ»: `169.46.0.0/16`, `158.177.0.0/16`, `161.202.0.0/16` в allow.
+- Юнит-тест на новое правило safe-пулов (всего 134 теста).
+- **Известное ограничение**: на части устройств Android-стек `system` зависит от
+  vendor-прошивки — проверено на realme RMX3363: после старта пропускает первые
+  пакеты и затем молча отбрасывает трафик до перезапуска VPN. Рекомендуемый
+  стек — `gvisor` (он же используется экраном диагностики). Предупреждение
+  пишется в `doctor.log` при старте с `system`.
+
 ## 0.22.0 — языки интерфейса и SEO-документация
 
 - **Выбор языка** в Настройках: Системный / Русский / English / Bahasa Indonesia /
@@ -37,7 +63,7 @@
 - Экран «Матч» показывает текущую фазу и что именно фильтруется.
 - `rules.json` обновлён (2026-11-09) и переподписан.
 
-## 0.21.0 — phase machine + delay shaper (experimental)
+## 0.21.0 â phase machine + delay shaper (experimental)
 
 - **Фазовая машина** (`MatchPhaseController`): IDLE → QUEUE → MATCH_FOUND → IN_GAME.
   В MATCH_FOUND ничего не блокируется и не задерживается; в IN_GAME блок запрещён
@@ -56,7 +82,7 @@
   debug-trace, конфиг (reject/delay/фазы).
 - Не опубликовано: тег `v0.21.0` ставится после проверки на устройстве.
 
-## 0.20.1 — diagnostics polish
+## 0.20.1 â diagnostics polish
 
 - Ping diagnostics show **jitter** (`±N`) and **packet loss** (`потери N%`), plus the
   time of the last measurement («Обновлено: HH:mm»).
@@ -65,7 +91,7 @@
 - Added unit tests for the login-pool policy and `AutoProfileAdvisor`.
 - No release published yet: tag `v0.20.1` is created at deploy time.
 
-## 0.20.0 — MLBB Network Doctor
+## 0.20.0 â MLBB Network Doctor
 
 - Rebrand: the app is now **MLBB Network Doctor** (launcher, header, description). The VPN filter is still there; it moved into the dashboard.
 - New dashboard: current ping, route status (direct / filtered / off) and the selected region as three live tiles.

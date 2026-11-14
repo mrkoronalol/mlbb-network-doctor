@@ -213,6 +213,13 @@ class BlockerVpnService : VpnService() {
                 VpnNotifier.cancel(this@BlockerVpnService)
                 BlockerRepository.log("Блокировка запущена. Правил: $lastRuleCount, режим обнаружения: ${BlocklistStore(this@BlockerVpnService).discoveryMode}")
                 val startStore = BlocklistStore(this@BlockerVpnService)
+                if (startStore.tunStack == "system") {
+                    // Known risk: the Android 'system' stack can pass a few first
+                    // packets and then silently drop everything until restart.
+                    FileLog.info(
+                        "TUN stack system is experimental - if traffic stalls, switch to gvisor in Settings",
+                    )
+                }
                 FileLog.info(
                     "tun up: rules=$lastRuleCount profile=${startStore.selectedProfile ?: "none"} " +
                         "stack=${startStore.tunStack} mode=${startStore.filterMode} discovery=${startStore.discoveryMode} " +
@@ -299,7 +306,7 @@ class BlockerVpnService : VpnService() {
                     FileLog.info(
                         "reload applied: rules=$lastRuleCount phase=${MatchPhaseController.phase.value.name}",
                     )
-                    BlockerRepository.log("Правила обновлены. Активных правил: $lastRuleCount")
+                BlockerRepository.log("Правила обновлены. Активных правил: $lastRuleCount")
                 } while (reloadRequested.get() && !stopping.get())
             } catch (t: Throwable) {
                 val message = t.message ?: t.javaClass.simpleName
@@ -635,8 +642,9 @@ class BlockerVpnService : VpnService() {
         }
     }
 
-    private fun startConnectionMonitor() {
+    fun startConnectionMonitor() {
         connectionMonitor?.stop()
+        BlockerRepository.log("Монитор соединений: запуск")
         connectionMonitor = ConnectionMonitor(
             scope,
             { message -> BlockerRepository.log(message) },

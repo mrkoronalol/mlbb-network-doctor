@@ -142,6 +142,7 @@ object SingBoxConfigBuilder {
                 .put("action", "route")
                 .put("outbound", "direct"),
         )
+        BypassRules.append(routeRules)
         if (loginRules.isNotEmpty() && loginPorts.isNotEmpty()) {
             routeRules.put(
                 JSONObject()
